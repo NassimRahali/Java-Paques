@@ -36,11 +36,7 @@ public class Bank_Client extends javax.swing.JFrame
     public Bank_Client()
     {
         initComponents();
-        
-        this.bDemande.setEnabled(false);
-        this.lbID.setEnabled(false);
-        this.tfID.setEnabled(false);
-        
+
         // <editor-fold defaultstate="collapsed" desc="Init Properties">
         /*
         try
@@ -154,7 +150,10 @@ public class Bank_Client extends javax.swing.JFrame
         pRequest.add(spMontant);
 
         lbID.setText("Id");
+        lbID.setEnabled(false);
         pRequest.add(lbID);
+
+        tfID.setEnabled(false);
         pRequest.add(tfID);
 
         Reponse.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -162,6 +161,7 @@ public class Bank_Client extends javax.swing.JFrame
         pRequest.add(Reponse);
 
         bDemande.setText("Demande");
+        bDemande.setEnabled(false);
         bDemande.addActionListener(new java.awt.event.ActionListener()
         {
             public void actionPerformed(java.awt.event.ActionEvent evt)
