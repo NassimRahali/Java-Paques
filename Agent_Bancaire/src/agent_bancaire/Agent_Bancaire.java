@@ -16,21 +16,23 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import static java.lang.System.exit;
 import java.net.Socket;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.spec.AlgorithmParameterSpec;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.table.DefaultTableModel;
+import m18.kerberos.ASReply;
+import m18.kerberos.ASRequest;
+import m18.kerberos.KcTGS;
 
 /**
  *
@@ -48,6 +50,8 @@ public class Agent_Bancaire extends javax.swing.JFrame
     private int PORTAS;
     private String IPTGS;
     private int PORTTGS;
+    
+    private KcTGS KCTGS;
     
     public Agent_Bancaire()
     {
@@ -313,15 +317,24 @@ public class Agent_Bancaire extends javax.swing.JFrame
             
             String pseudo = co.getPseudo();
             String passwd = co.getPasswd();
+            while(passwd.length() < 8)
+                passwd += passwd;
+            passwd = passwd.substring(0, 8);
+            
+            ASRequest asReq = new ASRequest("INITIAL_REQUEST", pseudo, passwd, "10.43.14.40", "TGS");
+            oos1.writeObject(asReq);
             
             // Génération KC
-            KeyGenerator keygenerator = KeyGenerator.getInstance("DES");
-            AlgorithmParameterSpec spec = (AlgorithmParameterSpec)new SecretKeySpec(passwd.getBytes(), "DES");
-            keygenerator.init(spec);
-            SecretKey KC = keygenerator.generateKey();
+            SecretKey KC = new SecretKeySpec(passwd.getBytes(), "DES");
             Cipher cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
             cipher.init(Cipher.DECRYPT_MODE, KC);
             
+            // Récupération ASReply
+            ASReply asRep = (ASReply)ois1.readObject();
+            KCTGS = (KcTGS) asRep.getKCTGS().getObject(cipher);
+
+            System.out.println(KCTGS.getServerName());
+            System.out.println(KCTGS.getKCTGSSessionKey().toString());
             
             for (Component c : this.p1Ctrl.getComponents())
             {
@@ -329,19 +342,13 @@ public class Agent_Bancaire extends javax.swing.JFrame
             }
             this.b1Connexion.setEnabled(false);
             
-        } catch (IOException ex)
+        } catch (IOException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | ClassNotFoundException ex)
         {
             Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InvalidAlgorithmParameterException ex)
+        } catch (IllegalBlockSizeException ex)
         {
             Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NoSuchAlgorithmException ex)
-        {
-            Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NoSuchPaddingException ex)
-        {
-            Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InvalidKeyException ex)
+        } catch (BadPaddingException ex)
         {
             Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
         }

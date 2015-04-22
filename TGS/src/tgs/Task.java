@@ -10,8 +10,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  *
@@ -34,11 +40,14 @@ public class Task implements Runnable
         try
         {
             // Chargement clé symétrique KTGS
+            SecretKey KTGS = new SecretKeySpec("cisco".getBytes(), "DES");
             
             // Récupération de l'objet
             RequestTGS req = (RequestTGS)ois.readObject();
             
             // Décryptage de l'objet RequestTGS avec la clé symétrique KTGS
+            Cipher cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, KTGS);
             
             // Récupération clé de session KCTGS
             
@@ -48,7 +57,7 @@ public class Task implements Runnable
             
             
         } 
-        catch (IOException | ClassNotFoundException ex)
+        catch (IOException | ClassNotFoundException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException ex)
         {
             Logger.getLogger(Task.class.getName()).log(Level.SEVERE, null, ex);
         }
