@@ -13,6 +13,7 @@ import javax.crypto.SealedObject;
  * @author Nassim
  */
 public class TGSRequest implements Serializable {
+
     private static long serialVersionUID = 2;
     private String service;
     SealedObject ticket;
@@ -41,5 +42,5 @@ public class TGSRequest implements Serializable {
     public void setAuthenticator(SealedObject authenticator) {
         this.authenticator = authenticator;
     }
-    
+
 }
