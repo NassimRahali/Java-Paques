@@ -47,6 +47,9 @@ public class Task implements Runnable
     {
         try
         {
+            oos = new ObjectOutputStream(cSock.getOutputStream());
+            ois = new ObjectInputStream(cSock.getInputStream());
+                        
             // Chargement clé symétrique KTGS
             SecretKey KTGS = new SecretKeySpec("cisco123".getBytes(), "DES");
             
@@ -95,10 +98,16 @@ public class Task implements Runnable
             tick.setService(TGSreq.getService());
             tick.setKCS(soKCS);
             
+            cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, KCTGS);
+            
+            SealedObject soKCSkeyOnly = new SealedObject(kcsKey, cipher);
+            
             TGSReply TGSrep = new TGSReply();
+            TGSrep.setKCSkey(soKCSkeyOnly);
+            TGSrep.setTicket(tick);
             
-            
-            
+            oos.writeObject(TGSrep);
             
         } 
         catch (BadChecksumException ex)

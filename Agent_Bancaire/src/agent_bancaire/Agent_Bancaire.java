@@ -31,6 +31,7 @@ import m18.kerberos.as.ASReply;
 import m18.kerberos.as.ASRequest;
 import m18.kerberos.as.KcTGS;
 import m18.kerberos.tgs.AuthenticatorTGS;
+import m18.kerberos.tgs.TGSReply;
 import m18.kerberos.tgs.TGSRequest;
 
 /**
@@ -356,8 +357,9 @@ public class Agent_Bancaire extends javax.swing.JFrame
             // Envoi TGS Request
             oos1.writeObject(TGSreq);
             
-            // TGS Response
-            
+            // TGS Reply
+            TGSReply TGSrep = (TGSReply)ois1.readObject();
+            System.out.println("TGS Reply reçu !!");
             
             for (Component c : this.p1Ctrl.getComponents())
             {
