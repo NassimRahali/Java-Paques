@@ -1,16 +1,12 @@
 package m18.kerberos;
 
-/*
- * RAHALI Nassim
- * M18
- * 2014-2015
- */
+import java.io.Serializable;
 
 /**
  *
  * @author Nassim
  */
-public class ASReply {
+public class ASReply implements Serializable {
     private TicketTCTGS ticket;
     private String status = "PWD OK";
     

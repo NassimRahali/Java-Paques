@@ -1,16 +1,12 @@
 package m18.kerberos;
 
-/*
- * RAHALI Nassim
- * M18
- * 2014-2015
- */
+import java.io.Serializable;
 
 /**
  *
  * @author Nassim
  */
-public class ASRequest {
+public class ASRequest implements Serializable {
 
     private String requestName;
     private String clientName;
