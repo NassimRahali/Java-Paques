@@ -16,23 +16,22 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import static java.lang.System.exit;
 import java.net.Socket;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SealedObject;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.table.DefaultTableModel;
-import m18.kerberos.ASReply;
-import m18.kerberos.ASRequest;
-import m18.kerberos.KcTGS;
+import m18.kerberos.as.ASReply;
+import m18.kerberos.as.ASRequest;
+import m18.kerberos.as.KcTGS;
+import m18.kerberos.tgs.AuthenticatorTGS;
+import m18.kerberos.tgs.TGSRequest;
 
 /**
  *
@@ -329,12 +328,36 @@ public class Agent_Bancaire extends javax.swing.JFrame
             Cipher cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
             cipher.init(Cipher.DECRYPT_MODE, KC);
             
-            // Récupération ASReply
+            // Récupération clé de session
             ASReply asRep = (ASReply)ois1.readObject();
             KCTGS = (KcTGS) asRep.getKCTGS().getObject(cipher);
-
-            System.out.println(KCTGS.getServerName());
-            System.out.println(KCTGS.getKCTGSSessionKey().toString());
+            
+            // Création authenticator
+            AuthenticatorTGS auth = new AuthenticatorTGS();
+            auth.setClientName(pseudo);
+            auth.setCurrentTime(new Date());
+            auth.setChecksum(asRep.getTicket().hashCode());
+            
+            cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, KCTGS.getKCTGSSessionKey());
+            SealedObject soAuth = new SealedObject(auth, cipher);
+            
+            // Création TGS Request
+            TGSRequest TGSreq = new TGSRequest();
+            TGSreq.setService(IP1);
+            TGSreq.setTicket(asRep.getTicket());
+            TGSreq.setAuthenticator(soAuth);
+            
+            // Changement socket
+            cSock1 = new Socket(IPTGS, PORTTGS);
+            ois1 = new ObjectInputStream(cSock1.getInputStream());
+            oos1 = new ObjectOutputStream(cSock1.getOutputStream());
+            
+            // Envoi TGS Request
+            oos1.writeObject(TGSreq);
+            
+            // TGS Response
+            
             
             for (Component c : this.p1Ctrl.getComponents())
             {
@@ -342,13 +365,7 @@ public class Agent_Bancaire extends javax.swing.JFrame
             }
             this.b1Connexion.setEnabled(false);
             
-        } catch (IOException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | ClassNotFoundException ex)
-        {
-            Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IllegalBlockSizeException ex)
-        {
-            Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (BadPaddingException ex)
+        } catch (Exception ex)
         {
             Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
         }
