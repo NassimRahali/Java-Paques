@@ -1,6 +1,7 @@
 package m18.kerberos;
 
 
+import java.io.Serializable;
 import java.util.Date;
 
 /*
@@ -14,7 +15,7 @@ import java.util.Date;
  *
  * @author Nassim
  */
-public class TicketTCTGS {
+public class TicketTCTGS implements Serializable {
     private byte[] kctgsSessionKey;
     private String clientName;
     private Date timeValid;

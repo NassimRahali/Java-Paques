@@ -6,13 +6,14 @@ package m18.kerberos;
  * 2014-2015
  */
 
+import java.io.Serializable;
 import javax.crypto.SecretKey;
 
 /**
  *
  * @author Nassim
  */
-public class KcTGS {
+public class KcTGS implements Serializable {
 
     private SecretKey KCTGSSessionKey;
     private String version;
