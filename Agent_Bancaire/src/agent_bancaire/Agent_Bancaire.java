@@ -5,6 +5,7 @@
 */
 package agent_bancaire;
 
+import GUI.Connexion;
 import Protocol.Pull;
 import Protocol.Push;
 import java.awt.Color;
@@ -298,6 +299,13 @@ public class Agent_Bancaire extends javax.swing.JFrame
             ois1 = new ObjectInputStream(cSock1.getInputStream());
             oos1 = new ObjectOutputStream(cSock1.getOutputStream());
             
+            Connexion co = new Connexion(this, true);
+            co.setVisible(true);
+            
+            String pseudo = co.getPseudo();
+            String passwd = co.getPasswd();
+            
+            // Génération KC
             
             
             for (Component c : this.p1Ctrl.getComponents())
