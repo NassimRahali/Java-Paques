@@ -5,13 +5,14 @@
  */
 package m18.kerberos.tgs;
 
+import java.io.Serializable;
 import javax.crypto.SealedObject;
 
 /**
  *
  * @author Nassim
  */
-public class TicketCS {
+public class TicketCS implements Serializable {
     private String service;
     private SealedObject KCS;
 

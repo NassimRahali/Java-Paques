@@ -5,6 +5,7 @@
  */
 package m18.kerberos.tgs;
 
+import java.io.Serializable;
 import java.util.Date;
 import javax.crypto.SecretKey;
 
@@ -12,7 +13,7 @@ import javax.crypto.SecretKey;
  *
  * @author Nassim
  */
-public class KCS {
+public class KCS implements Serializable {
     private String clientName;
     private String clientAddress;
     private Date validity;
