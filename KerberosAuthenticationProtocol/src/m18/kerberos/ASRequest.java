@@ -7,7 +7,7 @@ import java.io.Serializable;
  * @author Nassim
  */
 public class ASRequest implements Serializable {
-
+    private static long serialVersionUID = 1;
     private String requestName;
     private String clientName;
     private String clientPassword;
