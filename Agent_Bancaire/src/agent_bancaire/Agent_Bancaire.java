@@ -34,6 +34,10 @@ public class Agent_Bancaire extends javax.swing.JFrame
     private ObjectOutputStream oos1;
     private int PORT1;
     private String IP1;
+    private String IPAS;
+    private int PORTAS;
+    private String IPTGS;
+    private int PORTTGS;
     
     public Agent_Bancaire()
     {
@@ -47,6 +51,10 @@ public class Agent_Bancaire extends javax.swing.JFrame
         FileOutputStream fos = new FileOutputStream("Agent_Bancaire_1.properties");
         prop.setProperty("port", "7373");
         prop.setProperty("ip", "127.0.0.1");
+        prop.setProperty("ipAS", "10.43.14.13");
+        prop.setProperty("portAS", "3800");
+        prop.setProperty("ipTGS", "127.0.0.1");
+        prop.setProperty("portTGS", "3838");
         
         prop.store(fos, null);
         }
@@ -54,7 +62,7 @@ public class Agent_Bancaire extends javax.swing.JFrame
         */
         // </editor-fold>
         
-        // <editor-fold defaultstate="collapsed" desc="Load Properties1">
+        // <editor-fold defaultstate="collapsed" desc="Load Properties 1">
         try
         {
             Properties prop = new Properties();
@@ -63,6 +71,11 @@ public class Agent_Bancaire extends javax.swing.JFrame
             
             PORT1 = Integer.parseInt(prop.getProperty("port", "7373"));
             IP1 = prop.getProperty("ip", "127.0.0.1");
+            PORTAS = Integer.parseInt(prop.getProperty("portAS", "3800"));
+            IPAS = prop.getProperty("ipAS", "127.0.0.1");
+            PORTTGS = Integer.parseInt(prop.getProperty("portTGS", "3838"));
+            IPTGS = prop.getProperty("ipTGS", "127.0.0.1");
+            
             
             fis.close();
         } catch (IOException ex)
@@ -281,23 +294,19 @@ public class Agent_Bancaire extends javax.swing.JFrame
     {//GEN-HEADEREND:event_b1ConnexionActionPerformed
         try
         {
-            cSock1 = new Socket(IP1, PORT1);
+            cSock1 = new Socket(IPAS, PORTAS);
             ois1 = new ObjectInputStream(cSock1.getInputStream());
             oos1 = new ObjectOutputStream(cSock1.getOutputStream());
             
-            Pull pull = new Pull();
-            pull.setName("Hello");
-            oos1.writeObject(pull);
-            Push push = (Push)ois1.readObject();
-            if(push.getName().equals("Hello"))
+            
+            
+            for (Component c : this.p1Ctrl.getComponents())
             {
-                for (Component c : this.p1Ctrl.getComponents())
-                {
-                    c.setEnabled(true);
-                }
-                this.b1Connexion.setEnabled(false);
+                c.setEnabled(true);
             }
-        } catch (IOException | ClassNotFoundException ex)
+            this.b1Connexion.setEnabled(false);
+            
+        } catch (IOException ex)
         {
             Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -345,7 +354,7 @@ public class Agent_Bancaire extends javax.swing.JFrame
         {
             DefaultTableModel dm = (DefaultTableModel) this.tOperations.getModel();
             int rowCount = dm.getRowCount();
-            for (int i = rowCount - 1; i >= 0; i--) 
+            for (int i = rowCount - 1; i >= 0; i--)
             {
                 dm.removeRow(i);
             }
