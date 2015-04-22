@@ -1,4 +1,4 @@
-package m18.kerberos;
+package m18.kerberos.as;
 
 /*
  * RAHALI Nassim
