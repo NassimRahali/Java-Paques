@@ -3,6 +3,7 @@ package m18.kerberos;
 
 import java.io.Serializable;
 import java.util.Date;
+import javax.crypto.SecretKey;
 
 /*
  * RAHALI Nassim
@@ -16,22 +17,22 @@ import java.util.Date;
  * @author Nassim
  */
 public class TicketTCTGS implements Serializable {
-    private byte[] kctgsSessionKey;
+    private SecretKey KCTGS;
     private String clientName;
     private Date timeValid;
 
-    public TicketTCTGS(byte[] kctgsSessionKey, String clientName, Date timeValid) {
-        this.kctgsSessionKey = kctgsSessionKey;
+    public TicketTCTGS(SecretKey kctgsSessionKey, String clientName, Date timeValid) {
+        this.KCTGS = kctgsSessionKey;
         this.clientName = clientName;
         this.timeValid = timeValid;
     }
 
-    public byte[] getKctgsSessionKey() {
-        return kctgsSessionKey;
+    public SecretKey getKctgsSessionKey() {
+        return KCTGS;
     }
 
-    public void setKctgsSessionKey(byte[] kctgsSessionKey) {
-        this.kctgsSessionKey = kctgsSessionKey;
+    public void setKctgsSessionKey(SecretKey kctgsSessionKey) {
+        this.KCTGS = kctgsSessionKey;
     }
 
     public String getClientName() {
