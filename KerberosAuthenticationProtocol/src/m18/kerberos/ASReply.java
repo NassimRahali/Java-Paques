@@ -8,6 +8,7 @@ import javax.crypto.SealedObject;
  * @author Nassim
  */
 public class ASReply implements Serializable {
+    private static long serialVersionUID = 0;
     private SealedObject ticket;
     private SealedObject KCTGS;
     private String status = "PWD OK";
