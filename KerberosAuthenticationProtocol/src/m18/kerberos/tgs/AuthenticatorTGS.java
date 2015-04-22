@@ -12,7 +12,7 @@ import java.util.Date;
  *
  * @author Nassim
  */
-public class Authenticator implements Serializable {
+public class AuthenticatorTGS implements Serializable {
     private String clientName;
     private Date currentTime;
     private int checksum;
