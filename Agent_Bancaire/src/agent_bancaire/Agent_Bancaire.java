@@ -33,6 +33,7 @@ import m18.kerberos.as.KcTGS;
 import m18.kerberos.tgs.AuthenticatorTGS;
 import m18.kerberos.tgs.TGSReply;
 import m18.kerberos.tgs.TGSRequest;
+import m18.kerberos.tgs.TicketCS;
 
 /**
  *
@@ -52,6 +53,12 @@ public class Agent_Bancaire extends javax.swing.JFrame
     private int PORTTGS;
     
     private KcTGS KCTGS;
+    
+    private TicketCS Ticket;
+    private SealedObject Authentificateur;
+    
+    private SecretKey KCS;
+    private AuthenticatorTGS auth;
     
     public Agent_Bancaire()
     {
@@ -321,7 +328,7 @@ public class Agent_Bancaire extends javax.swing.JFrame
                 passwd += passwd;
             passwd = passwd.substring(0, 8);
             
-            ASRequest asReq = new ASRequest("INITIAL_REQUEST", pseudo, passwd, "10.43.14.40", "TGS");
+            ASRequest asReq = new ASRequest("INITIAL_REQUEST", pseudo, passwd, "127.0.0.1", "TGS");
             oos1.writeObject(asReq);
             
             // Génération KC
@@ -334,7 +341,7 @@ public class Agent_Bancaire extends javax.swing.JFrame
             KCTGS = (KcTGS) asRep.getKCTGS().getObject(cipher);
             
             // Création authenticator
-            AuthenticatorTGS auth = new AuthenticatorTGS();
+            auth = new AuthenticatorTGS();
             auth.setClientName(pseudo);
             auth.setCurrentTime(new Date());
             auth.setChecksum(auth.getClientName().hashCode());
@@ -361,6 +368,19 @@ public class Agent_Bancaire extends javax.swing.JFrame
             TGSReply TGSrep = (TGSReply)ois1.readObject();
             System.out.println("TGS Reply reçu !!");
             
+            // Sauvegarde Authentificateur et Ticket
+            Ticket = TGSrep.getTicket();
+            cipher.init(Cipher.DECRYPT_MODE, KCTGS.getKCTGSSessionKey());
+            KCS = (SecretKey) TGSrep.getKCSkey().getObject(cipher);
+            cipher.init(Cipher.ENCRYPT_MODE, KCS);
+            Authentificateur = new SealedObject(auth, cipher);
+            System.out.println("Fin Kerberos");
+            
+            cSock1.close();
+            cSock1 = new Socket(IP1, PORT1);
+            ois1 = new ObjectInputStream(cSock1.getInputStream());
+            oos1 = new ObjectOutputStream(cSock1.getOutputStream());                        
+            
             for (Component c : this.p1Ctrl.getComponents())
             {
                 c.setEnabled(true);
@@ -384,12 +404,21 @@ public class Agent_Bancaire extends javax.swing.JFrame
                 ids.add(this.tOperations.getValueAt(ind, 0).toString());
             
             Pull pull = new Pull();
+            pull.setAuthenticator(this.Authentificateur);
+            pull.setTicket(this.Ticket);
             pull.setName("validation");
             pull.setIds(ids);
             
             oos1.writeObject(pull);
             
             Push push = (Push)ois1.readObject();
+            SealedObject so = push.getTimestamp();
+            Cipher c = Cipher.getInstance("DES/ECB/PKCS5Padding");
+            c.init(Cipher.DECRYPT_MODE, KCS);
+            Date timestamp = (Date)so.getObject(c);
+            if(timestamp == auth.getCurrentTime())
+                System.out.println("Serveur authentifié");
+            
             if(push.getName().equalsIgnoreCase("validOK"))
             {
                 this.Status1.setText("Validation réussie");
@@ -406,6 +435,9 @@ public class Agent_Bancaire extends javax.swing.JFrame
             this.Status1.setText("Echec validation");
             this.Status1.setBackground(Color.red);
             Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception ex)
+        {
+            Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_b1ValiderActionPerformed
 
@@ -421,6 +453,8 @@ public class Agent_Bancaire extends javax.swing.JFrame
             }
             
             Pull pull = new Pull();
+            pull.setAuthenticator(this.Authentificateur);
+            pull.setTicket(this.Ticket);
             pull.setName("recherche");
             pull.setBanque(this.tf1Banque.getText());
             int choix = this.cb1Valide.getSelectedIndex();
@@ -439,6 +473,13 @@ public class Agent_Bancaire extends javax.swing.JFrame
             oos1.writeObject(pull);
             
             Push push = (Push) ois1.readObject();
+            SealedObject so = push.getTimestamp();
+            Cipher c = Cipher.getInstance("DES/ECB/PKCS5Padding");
+            c.init(Cipher.DECRYPT_MODE, KCS);
+            Date timestamp = (Date)so.getObject(c);
+            if(timestamp == auth.getCurrentTime())
+                System.out.println("Serveur authentifié");
+            
             DefaultTableModel dtm = (DefaultTableModel) this.tOperations.getModel();
             List<Object> list = null;
             for(int i = 0 ; i < push.getIds().size() ; i ++)
@@ -463,6 +504,10 @@ public class Agent_Bancaire extends javax.swing.JFrame
             this.Status1.setBackground(Color.red);
             Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
         }
+        catch(Exception ex)
+        {
+            Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);            
+        }
     }//GEN-LAST:event_b1RechercheActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt)//GEN-FIRST:event_formWindowClosing
@@ -470,6 +515,8 @@ public class Agent_Bancaire extends javax.swing.JFrame
         try
         {
             Pull pull = new Pull();
+            pull.setAuthenticator(this.Authentificateur);
+            pull.setTicket(this.Ticket);
             pull.setName("END");
             oos1.writeObject(pull);
             System.out.println("Closing");

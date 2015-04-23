@@ -11,13 +11,20 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.Cipher;
+import javax.crypto.SealedObject;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import m18.kerberos.exceptions.BadTimestampException;
+import m18.kerberos.tgs.AuthenticatorTGS;
+import m18.kerberos.tgs.KCS;
 
 /**
  *
@@ -42,8 +49,15 @@ public class Task2 implements Runnable
     {
         try
         {
+            SecretKey KS = new SecretKeySpec("cisco789".getBytes(), "DES");
+            Cipher cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, KS);
+            System.out.println("KS " + KS);
+            
             oos = new ObjectOutputStream(cSock.getOutputStream());
+            System.out.println(oos);
             ois = new ObjectInputStream(cSock.getInputStream());
+            System.out.println(ois);
             if(ois == null || oos == null)
                 System.exit(1);
             else
@@ -55,6 +69,19 @@ public class Task2 implements Runnable
             while(fin != true)
             {
                 pull = (Pull)ois.readObject();
+                cipher.init(Cipher.DECRYPT_MODE, KS);
+                SealedObject so = pull.getTicket().getKCS();
+                KCS unsealed = null;
+                unsealed = (KCS) so.getObject(cipher);
+                SecretKey KCS = unsealed.getKcs();
+                // Verification timestamp
+                long validity = unsealed.getValidity().getTime();
+                long now = new Date().getTime();
+                if((validity - now) < 0)
+                    throw new BadTimestampException();
+                else
+                    System.out.println("Timestamp valide");
+                
                 switch(pull.getName())
                 {
                     case "Hello":
@@ -97,13 +124,22 @@ public class Task2 implements Runnable
                         
                     }break;
                 }
+                cipher.init(Cipher.DECRYPT_MODE, KCS);
+                AuthenticatorTGS auth = (AuthenticatorTGS) pull.getAuthenticator().getObject(cipher);
+                cipher.init(Cipher.ENCRYPT_MODE, KCS);
+                push.setTimestamp(new SealedObject(auth.getCurrentTime(), cipher));
+                
                 oos.writeObject(push);
             }
             oos.close();
             ois.close();
             cSock.close();
         }
-        catch (IOException | ClassNotFoundException ex)
+        catch (BadTimestampException ex)
+        {
+            System.out.println("BadTimeStampExc");
+        }
+        catch (Exception ex)
         {
             Logger.getLogger(Task.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -113,7 +149,7 @@ public class Task2 implements Runnable
         for (DBObject o : dbCursor)
         {
             //System.out.println(o);
-            HashMap map = (HashMap)o.toMap();            
+            HashMap map = (HashMap)o.toMap();
             push.getIds().add(map.get("_id").toString().replace(".0", ""));
             push.getMontants().add(map.get("montant").toString().replace(".0", ""));
             push.getTypes().add(map.get("type").toString());

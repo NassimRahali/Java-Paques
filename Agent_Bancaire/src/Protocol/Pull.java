@@ -8,6 +8,7 @@ package Protocol;
 import java.io.Serializable;
 import java.util.ArrayList;
 import javax.crypto.SealedObject;
+import m18.kerberos.tgs.TicketCS;
 
 /**
  *
@@ -16,7 +17,7 @@ import javax.crypto.SealedObject;
 public class Pull implements Serializable
 {
     private static long serialVersionUID = 6;
-    private SealedObject ticket;
+    private TicketCS ticket;
     private SealedObject authenticator;
     
     private String Name;
@@ -65,12 +66,12 @@ public class Pull implements Serializable
         this.ids = ids;
     }
 
-    public SealedObject getTicket()
+    public TicketCS getTicket()
     {
         return ticket;
     }
 
-    public void setTicket(SealedObject ticket)
+    public void setTicket(TicketCS ticket)
     {
         this.ticket = ticket;
     }
