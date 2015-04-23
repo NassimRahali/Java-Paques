@@ -14,17 +14,9 @@ import javax.crypto.SealedObject;
  */
 public class TGSReply implements Serializable {
 
-    private static long serialVersionUID = 3;
+    private static long serialVersionUID = 5;
     private TicketCS ticket;
     private SealedObject KCSkey;
-
-    public static long getSerialVersionUID() {
-        return serialVersionUID;
-    }
-
-    public static void setSerialVersionUID(long serialVersionUID) {
-        TGSReply.serialVersionUID = serialVersionUID;
-    }
 
     public TicketCS getTicket() {
         return ticket;

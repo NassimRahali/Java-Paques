@@ -78,7 +78,7 @@ public class ASTask implements Runnable {
                         c.add(Calendar.HOUR, 8);
                         TicketTCTGS ticketTCTGS = new TicketTCTGS(kctgs.getKCTGSSessionKey(), asRequest.getClientName(), c.getTime());
                         SealedObject sealedTicket = new SealedObject(ticketTCTGS, cipher2);
-                        ASReply asReply = new ASReply(sealedKctgs, sealedKctgs);
+                        ASReply asReply = new ASReply(sealedTicket, sealedKctgs);
                         asReply.setStatus("OK");
                         oos.writeObject(asReply);
                         break;
