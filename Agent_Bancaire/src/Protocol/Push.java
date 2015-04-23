@@ -7,6 +7,7 @@ package Protocol;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import javax.crypto.SealedObject;
 
 /**
  *
@@ -14,6 +15,10 @@ import java.util.ArrayList;
  */
 public class Push implements Serializable
 {
+    private static long serialVersionUID = 7;
+    
+    private SealedObject timestamp;
+    
     private String Name;
     private ArrayList<String> ids;
     private ArrayList<String> banques;
@@ -89,6 +94,16 @@ public class Push implements Serializable
     public void setValides(ArrayList<Boolean> valides)
     {
         this.valides = valides;
+    }
+
+    public SealedObject getTimestamp()
+    {
+        return timestamp;
+    }
+
+    public void setTimestamp(SealedObject timestamp)
+    {
+        this.timestamp = timestamp;
     }
     // </editor-fold>
 

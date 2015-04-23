@@ -337,7 +337,7 @@ public class Agent_Bancaire extends javax.swing.JFrame
             AuthenticatorTGS auth = new AuthenticatorTGS();
             auth.setClientName(pseudo);
             auth.setCurrentTime(new Date());
-            auth.setChecksum(asRep.getTicket().hashCode());
+            auth.setChecksum(auth.getClientName().hashCode());
             
             cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
             cipher.init(Cipher.ENCRYPT_MODE, KCTGS.getKCTGSSessionKey());

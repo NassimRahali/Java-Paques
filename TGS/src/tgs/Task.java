@@ -63,7 +63,7 @@ public class Task implements Runnable
             
             // Récupération clé de session KCTGS
             KCTGS = ticket.getKctgsSessionKey();
-            
+     
             // Reinitialisation du cipher avec la KCTGS
             cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
             cipher.init(Cipher.DECRYPT_MODE, KCTGS);
@@ -72,7 +72,7 @@ public class Task implements Runnable
             AuthenticatorTGS auth = (AuthenticatorTGS)TGSreq.getAuthenticator().getObject(cipher);
             
             // Vérification checksum
-            if(TGSreq.getTicket().hashCode() != auth.getChecksum())
+            if(auth.getClientName().hashCode() != auth.getChecksum())
                 throw new BadChecksumException();
             
             // Verification timestamp
@@ -112,11 +112,11 @@ public class Task implements Runnable
         } 
         catch (BadChecksumException ex)
         {
-        
+            System.out.println("BadCheckSumExc");
         }
         catch (BadTimestampException ex)
         {
-        
+            System.out.println("BadTimeStampExc");
         }
         catch (Exception ex)
         {

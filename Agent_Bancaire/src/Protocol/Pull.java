@@ -7,6 +7,7 @@ package Protocol;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import javax.crypto.SealedObject;
 
 /**
  *
@@ -14,6 +15,10 @@ import java.util.ArrayList;
  */
 public class Pull implements Serializable
 {
+    private static long serialVersionUID = 6;
+    private SealedObject ticket;
+    private SealedObject authenticator;
+    
     private String Name;
     private String Banque;
     private String Valide;
@@ -59,6 +64,25 @@ public class Pull implements Serializable
     {
         this.ids = ids;
     }
-    // </editor-fold>
 
+    public SealedObject getTicket()
+    {
+        return ticket;
+    }
+
+    public void setTicket(SealedObject ticket)
+    {
+        this.ticket = ticket;
+    }
+
+    public SealedObject getAuthenticator()
+    {
+        return authenticator;
+    }
+
+    public void setAuthenticator(SealedObject authenticator)
+    {
+        this.authenticator = authenticator;
+    }
+    // </editor-fold>
 }
