@@ -2,18 +2,6 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group>
-            <file>file:/C:/Users/Nassim/Documents/Git/Java-Paques/KerberosAuthenticationProtocol/src/m18/kerberos/as/ASRequest.java</file>
-            <file>file:/C:/Users/Nassim/Documents/Git/Java-Paques/KerberosAuthenticationProtocol/src/m18/kerberos/as/ASReply.java</file>
-            <file>file:/C:/Users/Nassim/Documents/Git/Java-Paques/KerberosAuthenticationProtocol/src/m18/kerberos/as/KcTGS.java</file>
-            <file>file:/C:/Users/Nassim/Documents/Git/Java-Paques/KerberosAuthenticationProtocol/src/m18/kerberos/as/TicketTCTGS.java</file>
-            <file>file:/C:/Users/Nassim/Documents/Git/Java-Paques/KerberosAuthenticationProtocol/src/m18/kerberos/tgs/TGSRequest.java</file>
-            <file>file:/C:/Users/Nassim/Documents/Git/Java-Paques/KerberosAuthenticationProtocol/src/m18/kerberos/tgs/AuthenticatorTGS.java</file>
-            <file>file:/C:/Users/Nassim/Documents/Git/Java-Paques/KerberosAuthenticationProtocol/src/m18/kerberos/tgs/TGSReply.java</file>
-            <file>file:/C:/Users/Nassim/Documents/Git/Java-Paques/KerberosAuthenticationProtocol/src/m18/kerberos/exceptions/BadChecksumException.java</file>
-            <file>file:/C:/Users/Nassim/Documents/Git/Java-Paques/KerberosAuthenticationProtocol/src/m18/kerberos/exceptions/BadTimestampException.java</file>
-            <file>file:/C:/Users/Nassim/Documents/Git/Java-Paques/KerberosAuthenticationProtocol/src/m18/kerberos/tgs/TicketCS.java</file>
-            <file>file:/C:/Users/Nassim/Documents/Git/Java-Paques/KerberosAuthenticationProtocol/src/m18/kerberos/tgs/KCS.java</file>
-        </group>
+        <group/>
     </open-files>
 </project-private>
