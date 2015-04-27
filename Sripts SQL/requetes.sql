@@ -2,8 +2,8 @@
 ---------------
 Requête 1 (OK)
 ---------------
-select * from operations where ClientID = (select IdClient from clients where Nom='Client1')
-	and  DateOp between '2015-01-02' and '2015-01-08';
+select * from operations where ClientID = (select IdClient from clients where Nom='Prenom1')
+	and  DateOp between '2012-01-01' and '2015-01-01';
 -----------------------------------------------------------------------------------------------------------------
 
 
@@ -11,7 +11,7 @@ select * from operations where ClientID = (select IdClient from clients where No
 ---------------
 Requête 2
 ---------------
-select avg(Montant) from comptes where ClientID = (select IdClient from clients where Nom='Client1');
+select avg(Montant) from comptes where ClientID = (select IdClient from clients where Nom='Prenom1');
 -----------------------------------------------------------------------------------------------------------------
 
 
@@ -36,7 +36,7 @@ select Fiable as Validation from comptes where Fiable = 1 and IdCompte = 1
 -----------------------------------------------------------------------------------------------------------------
 
 
-
+	
 
 select * from comptes where ClientID = 1;
 

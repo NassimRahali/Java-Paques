@@ -5,16 +5,19 @@
  */
 package data_server;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
+
+import guis.SelectGUI;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JFrame;
 import protocoleCLIBOP.ReponseCLIBOP;
 import protocoleCLIBOP.RequeteCLIBOP;
 
@@ -27,12 +30,12 @@ public class Tache implements Runnable
     private Socket socketClient;
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
-    private DBCollection collection;
+    private Connection connexion;
     
-    public Tache(Socket sock, DBCollection dbCol)
+    public Tache(Socket sock, Connection c)
     {
         socketClient = sock;
-        collection = dbCol;
+        connexion = c;
     }
 
     @Override
@@ -49,7 +52,7 @@ public class Tache implements Runnable
                 System.out.println("Serveur en attente");
         
             boolean fin = false;
-        
+            
             //Gestion du protocole
             RequeteCLIBOP req = null;
             ReponseCLIBOP rep = null;
@@ -75,11 +78,17 @@ public class Tache implements Runnable
                         rep = new ReponseCLIBOP();
                         rep.setCmd("GETLIST");
                         
-                        DBObject query = new BasicDBObject();
-                        if(req.isIsValid() == true)
+                        try 
                         {
-                            
-                        }
+                            Statement instruction = connexion.createStatement();
+                            ResultSet rs = instruction.executeQuery("select * from operations where ClientID = (select IdClient from clients where Nom='"+req.getPrenom()+"')\n" +
+                                                                    "and  DateOp between '"+req.getDateDebut()+"' and '"+req.getDateFin()+"'");
+                            while (rs.next())
+                            {
+                                String tuple = rs.getString("IdOp") + "#" +  rs.getString("IdOp") + "#" +  rs.getString("ClientID") + "#" + rs.getString("Montant") ;
+                                rep.getTuples().add(tuple);
+                            }
+                        } catch (SQLException ex) { Logger.getLogger(SelectGUI.class.getName()).log(Level.SEVERE, null, ex);}
                         
                         
                     }
@@ -88,21 +97,67 @@ public class Tache implements Runnable
                     //Valeur moyenne mensuelle des comptes d'un client    
                     case "AVERAGE":
                     {
-
+                        rep = new ReponseCLIBOP();
+                        rep.setCmd("AVERAGE");
+                        
+                        try 
+                        {
+                            Statement instruction = connexion.createStatement();
+                            //A FAIRE
+                            ResultSet rs = instruction.executeQuery("select * from operations where ClientID = (select IdClient from clients where Nom='"+req.getPrenom()+"')\n" +
+                                                                    "and  DateOp between '"+req.getDateDebut()+"' and '"+req.getDateFin()+"'");
+                            while (rs.next())
+                            {
+                                //A FAIRE
+                                String tuple = rs.getString("IdOp") + "#" + rs.getString("ClientID");
+                                rep.getTuples().add(tuple);
+                            }
+                        } catch (SQLException ex) { Logger.getLogger(SelectGUI.class.getName()).log(Level.SEVERE, null, ex);}
+                        
                     }
                     break;
 
                     //Validation d'un compte client 
                     case "VALIDATE":
                     {
-
+                        rep = new ReponseCLIBOP();
+                        rep.setCmd("VALIDATE");
+                        
+                        try 
+                        {
+                            Statement instruction = connexion.createStatement();
+                            
+                            ResultSet rs = instruction.executeQuery("select Fiable as Validation from comptes where Fiable = 1 and IdCompte = " + req.getIdCompte()+"and ClientID = (select IdClient from clients where Nom="+req.getPrenom());
+                            while (rs.next())
+                            {
+                                //A FAIRE
+                                String tuple = rs.getString("IdOp") + "#" + rs.getString("ClientID");
+                                rep.getTuples().add(tuple);
+                            }
+                        } catch (SQLException ex) { Logger.getLogger(SelectGUI.class.getName()).log(Level.SEVERE, null, ex);}
+                            
                     }
                     break;
 
                     //Demande nombre de débits refusés
                     case "GETDEB":
                     {
-
+                        rep = new ReponseCLIBOP();
+                        rep.setCmd("GETDEB");
+                        
+                        try 
+                        {
+                            Statement instruction = connexion.createStatement();
+                            //A FAIRE
+                            ResultSet rs = instruction.executeQuery("select * from operations where ClientID = (select IdClient from clients where Nom='"+req.getPrenom()+"')\n" +
+                                                                    "and  DateOp between '"+req.getDateDebut()+"' and '"+req.getDateFin()+"'");
+                            while (rs.next())
+                            {
+                                //A FAIRE
+                                String tuple = rs.getString("IdOp") + "#" + rs.getString("ClientID");
+                                rep.getTuples().add(tuple);
+                            }
+                        } catch (SQLException ex) { Logger.getLogger(SelectGUI.class.getName()).log(Level.SEVERE, null, ex);}
                     }
                     break;
 

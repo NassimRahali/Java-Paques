@@ -5,15 +5,10 @@
  */
 package data_server;
 
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.MongoClient;
-import java.io.FileInputStream;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,19 +18,26 @@ import java.util.logging.Logger;
  */
 public class Data_Server 
 {
+    
     public static void main(String[] args) throws IOException 
     {
-        //Connection à la base de données BD_CLIENTS    
-        DBCollection collection = null;
-        try
-        {
-            MongoClient mongoClient = new MongoClient("localhost");
-            DB db = mongoClient.getDB("bd_clients");
-            collection = db.getCollection("bd_clients");
-        }
-        catch(UnknownHostException ex){ Logger.getLogger(Data_Server.class.getName()).log(Level.SEVERE, null, ex);}
+        //Connection à la base de données BD_CLIENTS
+        Connection connexion = null;
         
-        ThreadDataServer thServ = new ThreadDataServer(collection);
-        thServ.start();
+        try 
+        {
+            Class driver = Class.forName("com.mysql.jdbc.Driver");
+            System.out.println(">> Driver chargé");
+            
+            connexion = DriverManager.getConnection("jdbc:mysql://localhost:3306/bd_clients", "root","root");
+            System.out.println(">> Connexion à la BDD BD_CLIENTS réussie");
+
+            ThreadDataServer thServ = new ThreadDataServer(connexion);
+            thServ.start();
+        } 
+        catch (ClassNotFoundException ex) { Logger.getLogger(Data_Server.class.getName()).log(Level.SEVERE, null, ex); } 
+        catch (SQLException ex) { Logger.getLogger(Data_Server.class.getName()).log(Level.SEVERE, null, ex); }
+        
+        
     }   
 }

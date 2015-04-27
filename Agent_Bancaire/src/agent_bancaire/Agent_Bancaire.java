@@ -34,6 +34,7 @@ import m18.kerberos.tgs.AuthenticatorTGS;
 import m18.kerberos.tgs.TGSReply;
 import m18.kerberos.tgs.TGSRequest;
 import m18.kerberos.tgs.TicketCS;
+import protocoleCLIBOP.RequeteCLIBOP;
 
 /**
  *
@@ -589,6 +590,17 @@ public class Agent_Bancaire extends javax.swing.JFrame
             ois1.close();
             oos1.close();
             cSock1.close();
+            
+            RequeteCLIBOP req= new RequeteCLIBOP();
+            req.setAuthenticator(this.Authentificateur);
+            req.setTicket(this.TicketDS);
+            req.setCmd("END");
+            oosDS.writeObject(pull);
+            oisDS.close();
+            oosDS.close();
+            socketClientDS.close();
+            
+            
             exit(0);
         }
         catch (Exception ex)
@@ -667,16 +679,14 @@ public class Agent_Bancaire extends javax.swing.JFrame
             oisDS = new ObjectInputStream(socketClientDS.getInputStream());
             oosDS = new ObjectOutputStream(socketClientDS.getOutputStream());                        
             
-            for (Component c : this.p1Ctrl.getComponents())
+            for (Component c2 : this.PanCtrl.getComponents())
             {
-                c.setEnabled(true);
+                c2.setEnabled(true);
             }
             this.ButConnexion.setEnabled(false);
             
-        } catch (Exception ex)
-        {
-            Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        } 
+        catch (Exception ex){Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);}
     }//GEN-LAST:event_ButConnexionActionPerformed
     
     /**

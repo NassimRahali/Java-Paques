@@ -5,11 +5,11 @@
  */
 package data_server;
 
-import com.mongodb.DBCollection;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.Connection;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,16 +20,17 @@ import java.util.logging.Logger;
  */
 public class ThreadDataServer extends Thread
 {
-    DBCollection collection;
+    Connection connexion;
     
-    public ThreadDataServer(DBCollection c)
+    public ThreadDataServer(Connection c)
     {
-        collection = c;
+        connexion = c;
     }
     
     @Override
     public void run()
     { 
+        
         try
         {
             int port = 0;
@@ -60,7 +61,7 @@ public class ThreadDataServer extends Thread
             while(true)
             {
                 Socket socketClient = socketServ.accept();
-                th.getPoolThreads().execute(new Tache(socketClient,collection));
+                th.getPoolThreads().execute(new Tache(socketClient,connexion));
             }
         }
         catch(IOException ex){ Logger.getLogger(ThreadDataServer.class.getName()).log(Level.SEVERE, null, ex); }
