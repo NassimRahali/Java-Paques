@@ -238,11 +238,12 @@ Le serveur a accès a une base de données \emph{MongoDB} qui contient les banqu
 	}
 }
 \end{lstlisting}
-La communication avec les Banques Clientes se fait par SSL, on a donc créé des clés (vérifiées par un CA) enregistrées dans un keystore, côté client et côté serveur. Pour ne pas alourdir le code, la création d'une socket SSL a été mise dans un petit jar.\\\\
-Par défaut, les demandes de crédit ou de débit des Banques Clientes sont à \emph{false}. Il faudra l'intervention d'un Agent Bancaire pour la valider.\\\\
-L'Agent Bancaire peut demander à voir toutes les opérations ou alors les filtrer selon la Banque ou le type d'opération, pour ensuite en sélectionner une ou plusieurs pour les valider.
+La communication avec les Banques Clientes se fait par SSL, on a donc créé des clés (vérifiées par un CA) enregistrées dans un \emph{keystore}, côté client et côté serveur. Pour ne pas alourdir le code, la création d'une socket SSL a été mise dans un petit jar.\\\\
+Par défaut, les demandes de crédit ou de débit des Banques Clientes sont à \emph{false}. Il faudra l'intervention d'un Agent Bancaire pour les valider.\\\\
+L'Agent Bancaire peut demander à voir toutes les opérations ou alors les filtrer selon la Banque ou le type d'opération, pour ensuite en sélectionner une ou plusieurs et les valider.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Bank Client}
+La Banque Cliente communique donc par SSL avec son serveur. Lors de la connexion, le client doit choisir une banque partenaire de notre banque sous peine d'être refusé. Il peut ensuite faire des demandes de débit et/ou de crédit ou vérifier l'état d'une opération appartenant à sa banque.
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{Images/BankClient}
 	\centering
@@ -251,13 +252,23 @@ L'Agent Bancaire peut demander à voir toutes les opérations ou alors les filtr
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Agent Bancaire}
 \subsection{Vers Bank Server}
+L'Agent Bancaire se connecte au Bank Server et s'authentifie au moyen de l'architecture Kerberos. Il peut demander à voir l'ensemble des opérations, ou alors filtrer celles-ci par \emph{Banque} et \emph{Etat}.\\\\
+Pour valider une ou plusieurs opérations, l'Agent Bancaire va envoyer la liste des \emph{ids} à valider et le serveur va se charger de faire les updates correspondants sur la base de données.
+\begin{figure}[H]
+	\includegraphics[scale=0.4]{Images/AgentBancaire1}
+	\centering
+	\caption{Agent Bancaire (Bank Server)}
+\end{figure}
 \subsection{Vers Data Server}
+%% Screen partie 2 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Data Server}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Web Server}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{AS \& TGS}
+C'est la partie qui a été la plus 'délicate' à implémenter. En effet presque toutes les applications de l'architecture sont impactées et il faut travailler en groupe et étape par étape pour être sûr de ne pas chiffrer la mauvaise information ou avec la mauvaise clé pour que le suivant puisse bien décrypter les données.\\\\
+Point de vue technique, on notera juste l'utilisation de \emph{SealedObject} pour encapsuler des objets chiffrés puisqu'on ne peut pas simplement crypter un objet et en récupérer les bytes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
