@@ -53,12 +53,28 @@ public class Agent_Bancaire extends javax.swing.JFrame
     private int PORTTGS;
     
     private KcTGS KCTGS;
+    private KcTGS kcTgsDS;
     
     private TicketCS Ticket;
+    private TicketCS TicketDS;
     private SealedObject Authentificateur;
+    private SealedObject AuthentificateurDS;
     
     private SecretKey KCS;
+    private SecretKey kcsDS;
     private AuthenticatorTGS auth;
+    private AuthenticatorTGS authDS;
+    
+    //Communication avec Data_Server
+    private Socket socketClientDS;
+    private ObjectInputStream oisDS;
+    private ObjectOutputStream oosDS;
+    private int portDS;
+    private String ipDS;
+    private String ipAsDS;
+    private int portAsDS;
+    private String ipTgsDS;
+    private int portTgsDS;
     
     public Agent_Bancaire()
     {
@@ -104,6 +120,24 @@ public class Agent_Bancaire extends javax.swing.JFrame
             Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
         }
         // </editor-fold>
+        
+        //Initialisation des paramètres
+        try
+        {
+            Properties p = new Properties();
+            FileInputStream fis = new FileInputStream("AgentBancaireDS.properties");
+            p.load(fis);
+
+            portDS = Integer.parseInt(p.getProperty("port"));
+            ipDS = (p.getProperty("ip"));
+            portAsDS = Integer.parseInt(p.getProperty("portAS"));
+            ipAsDS = p.getProperty("ipAS", "127.0.0.1");
+            portTgsDS= Integer.parseInt(p.getProperty("portTGS"));
+            ipTgsDS = p.getProperty("ipTGS", "127.0.0.1");
+
+            fis.close();
+        }
+        catch(IOException ex){ Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex); }
     }
     
     /**
@@ -113,8 +147,7 @@ public class Agent_Bancaire extends javax.swing.JFrame
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents()
-    {
+    private void initComponents() {
 
         TPPrinc = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
@@ -130,12 +163,13 @@ public class Agent_Bancaire extends javax.swing.JFrame
         jScrollPane1 = new javax.swing.JScrollPane();
         tOperations = new javax.swing.JTable();
         jPanel2 = new javax.swing.JPanel();
+        PanCtrl = new javax.swing.JPanel();
+        ButConnexion = new javax.swing.JButton();
+        PanDisplay = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        addWindowListener(new java.awt.event.WindowAdapter()
-        {
-            public void windowClosing(java.awt.event.WindowEvent evt)
-            {
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
                 formWindowClosing(evt);
             }
         });
@@ -143,10 +177,8 @@ public class Agent_Bancaire extends javax.swing.JFrame
         p1Ctrl.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Contrôles", javax.swing.border.TitledBorder.CENTER, javax.swing.border.TitledBorder.DEFAULT_POSITION));
 
         b1Connexion.setText("Connexion");
-        b1Connexion.addActionListener(new java.awt.event.ActionListener()
-        {
-            public void actionPerformed(java.awt.event.ActionEvent evt)
-            {
+        b1Connexion.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
                 b1ConnexionActionPerformed(evt);
             }
         });
@@ -162,20 +194,16 @@ public class Agent_Bancaire extends javax.swing.JFrame
 
         b1Valider.setText("Valider");
         b1Valider.setEnabled(false);
-        b1Valider.addActionListener(new java.awt.event.ActionListener()
-        {
-            public void actionPerformed(java.awt.event.ActionEvent evt)
-            {
+        b1Valider.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
                 b1ValiderActionPerformed(evt);
             }
         });
 
         b1Recherche.setText("Recherche");
         b1Recherche.setEnabled(false);
-        b1Recherche.addActionListener(new java.awt.event.ActionListener()
-        {
-            public void actionPerformed(java.awt.event.ActionEvent evt)
-            {
+        b1Recherche.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
                 b1RechercheActionPerformed(evt);
             }
         });
@@ -209,7 +237,7 @@ public class Agent_Bancaire extends javax.swing.JFrame
                 .addGroup(p1CtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(b1Valider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(b1Recherche, javax.swing.GroupLayout.DEFAULT_SIZE, 127, Short.MAX_VALUE))
-                .addContainerGap(7, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         p1CtrlLayout.setVerticalGroup(
             p1CtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -222,7 +250,7 @@ public class Agent_Bancaire extends javax.swing.JFrame
                     .addComponent(b1Recherche))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(p1CtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(p1CtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(tf1Banque, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -232,32 +260,25 @@ public class Agent_Bancaire extends javax.swing.JFrame
         );
 
         tOperations.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][]
-            {
+            new Object [][] {
 
             },
-            new String []
-            {
+            new String [] {
                 "Id", "Banque", "Type", "Montant", "Validé"
             }
-        )
-        {
-            Class[] types = new Class []
-            {
+        ) {
+            Class[] types = new Class [] {
                 java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.Boolean.class
             };
-            boolean[] canEdit = new boolean []
-            {
+            boolean[] canEdit = new boolean [] {
                 false, false, false, false, false
             };
 
-            public Class getColumnClass(int columnIndex)
-            {
+            public Class getColumnClass(int columnIndex) {
                 return types [columnIndex];
             }
 
-            public boolean isCellEditable(int rowIndex, int columnIndex)
-            {
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return canEdit [columnIndex];
             }
         });
@@ -284,15 +305,60 @@ public class Agent_Bancaire extends javax.swing.JFrame
 
         TPPrinc.addTab("Bank Server", jPanel1);
 
+        ButConnexion.setText("Connexion");
+        ButConnexion.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ButConnexionActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout PanCtrlLayout = new javax.swing.GroupLayout(PanCtrl);
+        PanCtrl.setLayout(PanCtrlLayout);
+        PanCtrlLayout.setHorizontalGroup(
+            PanCtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, PanCtrlLayout.createSequentialGroup()
+                .addContainerGap(573, Short.MAX_VALUE)
+                .addComponent(ButConnexion, javax.swing.GroupLayout.PREFERRED_SIZE, 157, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(35, 35, 35))
+        );
+        PanCtrlLayout.setVerticalGroup(
+            PanCtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(PanCtrlLayout.createSequentialGroup()
+                .addGap(36, 36, 36)
+                .addComponent(ButConnexion)
+                .addContainerGap(41, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout PanDisplayLayout = new javax.swing.GroupLayout(PanDisplay);
+        PanDisplay.setLayout(PanDisplayLayout);
+        PanDisplayLayout.setHorizontalGroup(
+            PanDisplayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        PanDisplayLayout.setVerticalGroup(
+            PanDisplayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 409, Short.MAX_VALUE)
+        );
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 778, Short.MAX_VALUE)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(PanCtrl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(PanDisplay, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 533, Short.MAX_VALUE)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(PanCtrl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(PanDisplay, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         TPPrinc.addTab("Data Server", jPanel2);
@@ -530,6 +596,88 @@ public class Agent_Bancaire extends javax.swing.JFrame
             exit(0);
         }
     }//GEN-LAST:event_formWindowClosing
+
+    private void ButConnexionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButConnexionActionPerformed
+        
+        try
+        {
+            socketClientDS = new Socket(ipAsDS, portAsDS);
+            oisDS = new ObjectInputStream(socketClientDS.getInputStream());
+            oosDS = new ObjectOutputStream(socketClientDS.getOutputStream());
+            
+            Connexion c = new Connexion(this, true);
+            c.setVisible(true);
+            
+            String login = c.getPseudo();
+            String pwd = c.getPasswd();
+            while(pwd.length() < 8)
+                pwd += pwd;
+            pwd = pwd.substring(0, 8);
+            
+            ASRequest asReq = new ASRequest("INITIAL_REQUEST", login, pwd, "127.0.0.1", "TGS");
+            oosDS.writeObject(asReq);
+            
+            // Génération KC
+            SecretKey KC = new SecretKeySpec(pwd.getBytes(), "DES");
+            Cipher cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, KC);
+            
+            // Récupération clé de session
+            ASReply repAS = (ASReply)oisDS.readObject();
+            kcTgsDS = (KcTGS) repAS.getKCTGS().getObject(cipher);
+            
+            // Création authentificateur
+            authDS = new AuthenticatorTGS();
+            authDS.setClientName(login);
+            authDS.setCurrentTime(new Date());
+            authDS.setChecksum(authDS.getClientName().hashCode());
+            
+            cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, kcTgsDS.getKCTGSSessionKey());
+            SealedObject soAuth = new SealedObject(authDS, cipher);
+            
+            // Création TGS Request
+            TGSRequest TGSreq = new TGSRequest();
+            TGSreq.setService(ipDS);
+            TGSreq.setTicket(repAS.getTicket());
+            TGSreq.setAuthenticator(soAuth);
+            
+            // Changement socket
+            socketClientDS = new Socket(ipTgsDS, portTgsDS);
+            oisDS = new ObjectInputStream(socketClientDS.getInputStream());
+            oosDS = new ObjectOutputStream(socketClientDS.getOutputStream());
+            
+            // Envoi TGS Request
+            oosDS.writeObject(TGSreq);
+            
+            // TGS Reply
+            TGSReply TGSrep = (TGSReply)oisDS.readObject();
+            System.out.println("TGS Reply reçu !!");
+            
+            // Sauvegarde Authentificateur et Ticket
+            TicketDS = TGSrep.getTicket();
+            cipher.init(Cipher.DECRYPT_MODE, kcTgsDS.getKCTGSSessionKey());
+            kcsDS = (SecretKey) TGSrep.getKCSkey().getObject(cipher);
+            cipher.init(Cipher.ENCRYPT_MODE, kcsDS);
+            AuthentificateurDS = new SealedObject(authDS, cipher);
+            System.out.println("Fin Kerberos");
+            
+            socketClientDS.close();
+            socketClientDS = new Socket(ipDS, portDS);
+            oisDS = new ObjectInputStream(socketClientDS.getInputStream());
+            oosDS = new ObjectOutputStream(socketClientDS.getOutputStream());                        
+            
+            for (Component c : this.p1Ctrl.getComponents())
+            {
+                c.setEnabled(true);
+            }
+            this.ButConnexion.setEnabled(false);
+            
+        } catch (Exception ex)
+        {
+            Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_ButConnexionActionPerformed
     
     /**
      * @param args the command line arguments
@@ -577,6 +725,9 @@ public class Agent_Bancaire extends javax.swing.JFrame
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton ButConnexion;
+    private javax.swing.JPanel PanCtrl;
+    private javax.swing.JPanel PanDisplay;
     private javax.swing.JLabel Status1;
     private javax.swing.JTabbedPane TPPrinc;
     private javax.swing.JButton b1Connexion;
