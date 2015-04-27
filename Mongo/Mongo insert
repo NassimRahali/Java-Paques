@@ -1,0 +1,13 @@
+Mongo insert
+
+{ "_id" : 1, "type" : "debit", "montant" : 1000, "valide" : "false", "date" : "2015-04-15", "banque" : { "_id" : 1, "name" : "Belfius" } }
+{ "_id" : 2, "type" : "debit", "montant" : 2000, "valide" : "false", "date" : "2015-03-12", "banque" : { "_id" : 2, "name" : "ING" } }
+{ "_id" : 3, "type" : "credit", "montant" : 1500, "valide" : "true", "date" : "2015-02-15", "banque" : { "_id" : 1, "name" : "Belfius" } }
+{ "_id" : 4, "type" : "credit", "montant" : 500, "valide" : "true", "date" : "2015-01-15", "banque" : { "_id" : 2, "name" : "ING" } }
+{ "_id" : 5, "type" : "credit", "montant" : 2500, "valide" : "false", "date" : "2015-01-20", "banque" : { "_id" : 3, "name" : "BNP Paribas Fortis" } }
+{ "_id" : 0, "type" : "credit", "montant" : 100, "valide" : "true", "date" : "2015-01-25", "banque" : { "_id" : 2, "name" : "ING" } }
+{ "_id" : 6, "type" : "credit", "montant" : 150, "valide" : "false", "date" : "2015-02-16", "banque" : { "_id" : 2, "name" : "ING" } }
+{ "_id" : 7, "type" : "credit", "montant" : 300, "valide" : "true", "date" : "2015-04-05", "banque" : { "_id" : 2, "name" : "ING" } }
+{ "_id" : 8, "type" : "debit", "montant" : 10000, "valide" : "false", "date" : "2015-03-10", "banque" : { "_id" : 3, "name" : "BNP Paribas Fortis" } }
+{ "_id" : 9, "type" : "credit", "montant" : 100, "valide" : "true", "date" : "2015-01-03", "banque" : { "_id" : 1, "name" : "Belfius" } }
+{ "_id" : 10, "type" : "credit", "montant" : 90, "valide" : "true", "date" : "2015-04-20", "banque" : { "_id" : 2, "name" : "ING" } }
