@@ -72,7 +72,7 @@ public class Bank_Server
         {
             MongoClient mongoClient = new MongoClient("localhost");
             DB db = mongoClient.getDB("java");
-            collection = db.getCollection("transaction");
+            collection = db.getCollection("transactions");
         }
         catch(UnknownHostException ex)
         {

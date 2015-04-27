@@ -13,6 +13,8 @@ import com.mongodb.DBObject;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,7 +59,6 @@ public class Task implements Runnable
             for (Object id : idsTMP)
                 ids.add(Integer.parseInt(id.toString().replace(".0", "")));
             
-            
             Request req = (Request)ois.readObject();
             Response rep = new Response();
             rep.setName(req.getName());
@@ -88,6 +89,11 @@ public class Task implements Runnable
             {
                 req = (Request)ois.readObject();
                 DBObject document = new BasicDBObject();
+                
+                Date d = new Date();
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                String date = sdf.format(d);
+                
                 switch(req.getName())
                 {
                     case "END":
@@ -106,6 +112,7 @@ public class Task implements Runnable
                         document.put("type", "credit");
                         document.put("montant", req.getMontant());
                         document.put("valide", "false");
+                        document.put("date", date);
                         document.put("banque", new BasicDBObject("_id", IDBanque).append("name", banque));
                         collection.insert(document);
                         
@@ -124,6 +131,7 @@ public class Task implements Runnable
                         document.put("type", "debit");
                         document.put("montant", req.getMontant());
                         document.put("valide", "false");
+                        document.put("date", date);
                         document.put("banque", new BasicDBObject("_id", IDBanque).append("name", banque));
                         collection.insert(document);
                         
