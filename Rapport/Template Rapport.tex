@@ -265,6 +265,43 @@ Pour valider une ou plusieurs opérations, l'Agent Bancaire va envoyer la liste 
 \section{Data Server}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Web Server}
+\subsection{Controller}
+Nous avons commencé par développer le controlleur de l'architecture MVC. Il se nomme \texttt{BanqueAdminController}. Ce servlet ne va faire qu'aiguiller vers le JSP qui correspond à la requête effectuée par le client. À chaque fois qu'une requête concernant un graphique généré via JFreeChart sera effectué, celui-ci sera enregistré dans un dossier sur le serveur. Comme la page JSP fournie, dans ce cas, contient une balise image ayant pour source le controller \texttt{BanqueAdminController} et qu'une session est créée permettant de savoir quelle image fournir au client, celui-ci recevra (via un GET du navigateur) le graphique.
+\subsection{JSP}
+Plusieurs JSPs ont été créés. Un scénario standard serait :
+\begin{enumerate}
+	\item Le client arrive sur la page \texttt{index.jsp}.
+	\item Il renseigne un login et un mot de passe.
+	\item Si ceux-ci sont corrects, il va arriver sur la page \texttt{welcome.jsp}
+	\item Sur \texttt{welcome.jsp}, il pourra effectuer son choix (consulter une moyenne, avoir une répartition des crédits, ...).
+	\item Il sera ensuite envoyé sur une page qui correspond à son choix. Éventuellement, une image sera chargée correspondant à la requête effectuée. 
+	\end{enumerate}
+Notons l'existence de la page \texttt{error.jsp} fournie si l'utilisateur n'est pas authentifié.
+\subsection{Configuration HTTPS}
+Nous avons configuré Apache Tomcat pour fonctionner en HTTPS avec keystore.
+\begin{lstlisting}
+    <Connector port="8443" protocol="org.apache.coyote.http11.Http11NioProtocol"
+    maxThreads="150" SSLEnabled="true" scheme="https" secure="true"
+    clientAuth="false" sslProtocol="TLS" keystoreFile="web.keystore"
+    keystorePass="cisco123" />
+\end{lstlisting}
+
+\subsection{Quelques exemples}
+\begin{figure}[H]
+	\includegraphics[scale=0.4]{Images/log}
+	\centering
+	\caption{index.jsp}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[scale=0.4]{Images/choix}
+	\centering
+	\caption{welcome.jsp}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[scale=0.4]{Images/rep}
+	\centering
+	\caption{chart.jsp}
+\end{figure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{AS \& TGS}
 C'est la partie qui a été la plus 'délicate' à implémenter. En effet presque toutes les applications de l'architecture sont impactées et il faut travailler en groupe et étape par étape pour être sûr de ne pas chiffrer la mauvaise information ou avec la mauvaise clé pour que le suivant puisse bien décrypter les données.\\\\
