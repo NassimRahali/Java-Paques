@@ -25,7 +25,7 @@ public class RequeteCLIBOP implements Serializable
     private String prenom;
     private String dateDebut;
     private String dateFin;
-    private int idCompte;
+    private String idCompte;
 
     /**
      * @return the isValid
@@ -72,14 +72,14 @@ public class RequeteCLIBOP implements Serializable
     /**
      * @return the idCompte
      */
-    public int getIdCompte() {
+    public String getIdCompte() {
         return idCompte;
     }
 
     /**
      * @param idCompte the idCompte to set
      */
-    public void setIdCompte(int idCompte) {
+    public void setIdCompte(String idCompte) {
         this.idCompte = idCompte;
     }
 

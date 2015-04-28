@@ -6,7 +6,9 @@
 package protocoleCLIBOP;
 
 import java.io.Serializable;
+import java.sql.ResultSet;
 import java.util.Vector;
+import javax.crypto.SealedObject;
 
 /**
  *
@@ -18,7 +20,10 @@ public class ReponseCLIBOP implements Serializable
     private String typeOp;
     private String etat;
     private String cmd;
-    private Vector<String> tuples;
+    
+    private SealedObject timestamp;
+    
+    private Vector<Operations> tuples;
 
     /**
      * @return the isValid
@@ -76,18 +81,32 @@ public class ReponseCLIBOP implements Serializable
     }
 
     /**
+     * @return the timestamp
+     */
+    public SealedObject getTimestamp() {
+        return timestamp;
+    }
+
+    /**
+     * @param timestamp the timestamp to set
+     */
+    public void setTimestamp(SealedObject timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    /**
      * @return the tuples
      */
-    public Vector<String> getTuples() {
+    public Vector<Operations> getTuples() {
         return tuples;
     }
 
     /**
      * @param tuples the tuples to set
      */
-    public void setTuples(Vector<String> tuples) {
+    public void setTuples(Vector<Operations> tuples) {
         this.tuples = tuples;
     }
 
-    
+   
 }
