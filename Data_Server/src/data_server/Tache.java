@@ -8,17 +8,30 @@ package data_server;
 
 import protocoleCLIBOP.Operations;
 import guis.SelectGUI;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.security.InvalidKeyException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
+import java.util.Map;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,6 +45,7 @@ import javax.crypto.spec.SecretKeySpec;
 import m18.kerberos.exceptions.BadTimestampException;
 import m18.kerberos.tgs.AuthenticatorTGS;
 import m18.kerberos.tgs.KCS;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import protocoleCLIBOP.ReponseCLIBOP;
 import protocoleCLIBOP.RequeteCLIBOP;
 
@@ -45,6 +59,14 @@ public class Tache implements Runnable
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
     private Connection connexion;
+    private static String codeProvider =  "BC";//"CryptixCrypto"; 
+    
+    static
+    {
+        Security.addProvider(new BouncyCastleProvider());
+        //Security.addProvider(new CryptixCrypto());
+        
+    }
     
     public Tache(Socket sock, Connection c)
     {
@@ -68,7 +90,7 @@ public class Tache implements Runnable
             if(ois == null || oos == null)
                 System.exit(1);
             else
-                System.out.println(">>Serveur en attente");
+                System.out.println(">> Serveur en attente");
         
             boolean fin = false;
             
@@ -78,7 +100,6 @@ public class Tache implements Runnable
 
             while(fin == false)
             {
-           
                 req = (RequeteCLIBOP)ois.readObject();
                 
                 cipher.init(Cipher.DECRYPT_MODE, KS);
@@ -110,17 +131,19 @@ public class Tache implements Runnable
                     {   
                         rep = new ReponseCLIBOP();
                         rep.setCmd("GETLIST");
-                        Operations op = new Operations();
+                        
                         
                         try 
                         {
                             Statement instruction = connexion.createStatement();
-                            ResultSet rs = instruction.executeQuery("select * from operations where ClientID = (select IdClient from clients where Nom='"+req.getPrenom()+"')\n" +
-                                                                    "and  DateOp between '"+req.getDateDebut()+"' and '"+req.getDateFin()+"'");
+                            ResultSet rs = instruction.executeQuery("select * from operations where ClientID = (select IdClient from clients where Nom='"+req.getPrenom()+"')"
+                                                                    + "and  DateOp between '"+req.getDateDebut()+"' and '"+req.getDateFin()+"'");
                             Vector<Operations> v = new Vector();
                             
                             while(rs.next())
                             {
+                                Operations op = new Operations();
+                                
                                 op.setIdOp(rs.getString("IdOp"));
                                 op.setClientID(rs.getString("ClientID"));
                                 op.setMontant(rs.getString("Montant"));
@@ -145,47 +168,121 @@ public class Tache implements Runnable
                         try 
                         {
                             Statement instruction = connexion.createStatement();
-                            //A FAIRE
-                            ResultSet rs = instruction.executeQuery("select * from operations where ClientID = (select IdClient from clients where Nom='"+req.getPrenom()+"')\n" +
-                                                                    "and  DateOp between '"+req.getDateDebut()+"' and '"+req.getDateFin()+"'");
-//                            rep.setTuples(rs);
-                        } catch (SQLException ex) { Logger.getLogger(SelectGUI.class.getName()).log(Level.SEVERE, null, ex);}
-                        
-                    }
-                    break;
-
-                    //Validation d'un compte client 
-                    case "VALIDATE":
-                    {
-                        rep = new ReponseCLIBOP();
-                        rep.setCmd("VALIDATE");
-                        
-                        Operations op = new Operations();
-                        try 
-                        {
-                            Statement instruction = connexion.createStatement();
                             
-                            ResultSet rs = instruction.executeQuery("select * from comptes where ClientID = (select IdClient from clients where Nom="+req.getPrenom());
-                            
+                            ResultSet rs = instruction.executeQuery("select avg(Montant) as Montant, month(DateOp) as Month from operations where ClientID = (select IdClient from clients where Nom='"+req.getPrenom()+"') group by month(DateOp)");
                             Vector<Operations> v = new Vector();
                             
                             while(rs.next())
                             {
-                                op.setNumCompte("NumCompte");
-                                op.setClientID(rs.getString("ClientID"));
-                                op.setFiable(rs.getBoolean("Fiable"));
+                                Operations op = new Operations();
+                                
+                                op.setDateOp(rs.getString("Month"));
+                                op.setClientID(req.getPrenom());
+                                op.setMontant(rs.getString("Montant"));
                                 
                                 v.add(op);
+
                             }
                             
                             rep.setTuples(v);
-                            
                         } catch (SQLException ex) { Logger.getLogger(SelectGUI.class.getName()).log(Level.SEVERE, null, ex);}
-                        
                         
                     }
                     break;
 
+                    //Affichage pour validation d'un compte client 
+                    case "VALIDATE":
+                    {
+                        rep = new ReponseCLIBOP();
+                        rep.setCmd("VALIDATE");
+            
+                        try 
+                        {
+                            Statement instruction = connexion.createStatement();
+
+                            ResultSet rs = instruction.executeQuery("select * from comptes where ClientID = (select IdClient from clients where Nom='"+req.getPrenom()+"')");
+
+                            Vector<Operations> v = new Vector();
+
+                            while(rs.next())
+                            {
+                                Operations op = new Operations();
+
+                                op.setNumCompte(rs.getString("NumCompte"));
+                                op.setClientID(rs.getString("ClientID"));
+
+                                op.setFiable(rs.getBoolean("Fiable"));
+
+
+                                v.add(op);
+                            }
+
+                            rep.setTuples(v);
+                            rep.setIsUpdate(false);
+
+                        } catch (SQLException ex) { Logger.getLogger(SelectGUI.class.getName()).log(Level.SEVERE, null, ex);}
+              
+                    }
+                    break;
+
+                    //Affichage pour validation d'un compte client 
+                    case "UPDATE":
+                    { 
+                        rep = new ReponseCLIBOP();
+                        rep.setCmd("UPDATE");
+                        
+                        
+                        //Vérification de la signature
+                        KeyStore ksv = null;
+                        ksv = KeyStore.getInstance("PKCS12", codeProvider);
+                        ksv.load(new FileInputStream("validationCompte_keystore.p12"),"cisco12".toCharArray());
+
+                        System.out.println(">> Vérification de la signature");
+                        System.out.println("\t >> Recuperation du certificat");
+                        X509Certificate certif = (X509Certificate)ksv.getCertificate("comptableKaouValid");
+                        System.out.println("\t >> Recuperation de la cle publique");
+                        PublicKey clePublique = certif.getPublicKey();
+                        System.out.println("\t\t >> Cle publique recuperee = "+clePublique.toString());
+                        Signature sVerif = Signature.getInstance ("SHA1withECDSA", codeProvider);
+                        sVerif.initVerify(clePublique);
+                        //sVerif.update(req.getComptable().getBytes());
+                        sVerif.update("kaou".getBytes());
+
+                        boolean ok = sVerif.verify(req.getSignature());
+                        String reponse= null;
+                        if (ok)
+                        {
+                            reponse = new String("\t >> Signature testee avec succes");
+                            rep.setIsUpdate(true);
+                            try 
+                            {
+                                for (Map.Entry<String,String> e : req.getListUpdates().entrySet())
+                                {
+                                    String query = "update comptes SET Fiable = ? WHERE NumCompte = ?";
+                                    PreparedStatement preparedStmt = connexion.prepareStatement(query);
+                                    preparedStmt.setBoolean(1, Boolean.parseBoolean(e.getValue()));
+                                    preparedStmt.setString(2,e.getKey());
+
+                                    preparedStmt.executeUpdate();
+                                    System.out.println(">> UPDATE effectuée !");  
+                                }
+
+                                rep.setCmd("UPDATE");
+
+                            } catch (SQLException ex) { Logger.getLogger(SelectGUI.class.getName()).log(Level.SEVERE, null, ex);}
+                        }
+                            
+                        else
+                        {
+                            reponse = new String("\t >> Signature testee sans succes");
+                            rep.setIsUpdate(false);
+                        }
+
+                        System.out.println(reponse);
+                        System.out.println("\n >> Opérations terminées ");
+                    }
+                    break;    
+                    
                     //Demande nombre de débits refusés
                     case "GETDEB":
                     {
@@ -195,11 +292,26 @@ public class Tache implements Runnable
                         try 
                         {
                             Statement instruction = connexion.createStatement();
-                            //A FAIRE
-                            ResultSet rs = instruction.executeQuery("select * from operations where ClientID = (select IdClient from clients where Nom='"+req.getPrenom()+"')\n" +
-                                                                    "and  DateOp between '"+req.getDateDebut()+"' and '"+req.getDateFin()+"'");
                             
-//                            rep.setTuples(rs);
+                            ResultSet rs = instruction.executeQuery("select dr.Refuse as NombreRefuse from "
+                                                                        + "("
+                                                                            + "select ClientID, year(DateOp) as Year, count(Traitee) as Refuse from operations where Traitee = 0 group by ClientID, year(DateOp) order by ClientID"
+                                                                        + ") dr "
+                                                                    + "where Year ='" + req.getAnnee()+ "'and ClientID = (select IdClient from clients where Nom='"+ req.getPrenom()+"')");
+                            Vector<Operations> v = new Vector();
+                            
+                            while(rs.next())
+                            {
+                                Operations op = new Operations();
+                                
+                                op.setDateOp(req.getAnnee());
+                                op.setNbrRefusees(rs.getString("NombreRefuse"));
+                                op.setClientID(req.getPrenom());
+                                v.add(op);
+                            }
+                            
+                            rep.setTuples(v);
+                            
                         } catch (SQLException ex) { Logger.getLogger(SelectGUI.class.getName()).log(Level.SEVERE, null, ex);}
                     }
                     break;
@@ -239,6 +351,14 @@ public class Tache implements Runnable
         } catch (BadPaddingException ex) {
             Logger.getLogger(Tache.class.getName()).log(Level.SEVERE, null, ex);
         } catch (BadTimestampException ex) {
+            Logger.getLogger(Tache.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (KeyStoreException ex) {
+            Logger.getLogger(Tache.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NoSuchProviderException ex) {
+            Logger.getLogger(Tache.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (CertificateException ex) {
+            Logger.getLogger(Tache.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SignatureException ex) {
             Logger.getLogger(Tache.class.getName()).log(Level.SEVERE, null, ex);
         }
     }

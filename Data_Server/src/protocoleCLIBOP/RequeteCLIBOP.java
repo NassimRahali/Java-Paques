@@ -6,6 +6,7 @@
 package protocoleCLIBOP;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import javax.crypto.SealedObject;
 import m18.kerberos.tgs.TicketCS;
 
@@ -18,7 +19,7 @@ public class RequeteCLIBOP implements Serializable
     private TicketCS ticket;
     private SealedObject authenticator;
     
-    private boolean isValid = false;
+    private boolean isUpdate = false;
     private String typeOp;
     private String etat;
     private String cmd;
@@ -26,19 +27,24 @@ public class RequeteCLIBOP implements Serializable
     private String dateDebut;
     private String dateFin;
     private String idCompte;
+    private String annee;
+    private String comptable;
+    private byte[] signature;
+    
+    private HashMap<String,String> listUpdates = new HashMap();
 
     /**
-     * @return the isValid
+     * @return the isUpdate
      */
-    public boolean isIsValid() {
-        return isValid;
+    public boolean isIsUpdate() {
+        return isUpdate;
     }
 
     /**
-     * @param isValid the isValid to set
+     * @param isUpdate the isUpdate to set
      */
-    public void setIsValid(boolean isValid) {
-        this.isValid = isValid;
+    public void setIsUpdate(boolean isUpdate) {
+        this.isUpdate = isUpdate;
     }
 
     /**
@@ -166,5 +172,61 @@ public class RequeteCLIBOP implements Serializable
      */
     public void setAuthenticator(SealedObject authenticator) {
         this.authenticator = authenticator;
+    }
+
+    /**
+     * @return the annee
+     */
+    public String getAnnee() {
+        return annee;
+    }
+
+    /**
+     * @param annee the annee to set
+     */
+    public void setAnnee(String annee) {
+        this.annee = annee;
+    }
+
+    /**
+     * @return the listUpdates
+     */
+    public HashMap<String,String> getListUpdates() {
+        return listUpdates;
+    }
+
+    /**
+     * @param listUpdates the listUpdates to set
+     */
+    public void setListUpdates(HashMap<String,String> listUpdates) {
+        this.listUpdates = listUpdates;
+    }
+
+    /**
+     * @return the comptable
+     */
+    public String getComptable() {
+        return comptable;
+    }
+
+    /**
+     * @param comptable the comptable to set
+     */
+    public void setComptable(String comptable) {
+        this.comptable = comptable;
+    }
+
+    /**
+     * @return the signature
+     */
+    public byte[] getSignature() {
+        return signature;
+    }
+
+    /**
+     * @param signature the signature to set
+     */
+    public void setSignature(byte[] signature) {
+        this.signature = signature;
     }
 }

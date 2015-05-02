@@ -16,7 +16,7 @@ import javax.crypto.SealedObject;
  */
 public class ReponseCLIBOP implements Serializable
 {
-    private boolean isValid = false;
+    private boolean isUpdate = false;
     private String typeOp;
     private String etat;
     private String cmd;
@@ -26,17 +26,17 @@ public class ReponseCLIBOP implements Serializable
     private Vector<Operations> tuples;
 
     /**
-     * @return the isValid
+     * @return the isUpdate
      */
-    public boolean isIsValid() {
-        return isValid;
+    public boolean isIsUpdate() {
+        return isUpdate;
     }
 
     /**
-     * @param isValid the isValid to set
+     * @param isUpdate the isUpdate to set
      */
-    public void setIsValid(boolean isValid) {
-        this.isValid = isValid;
+    public void setIsUpdate(boolean isUpdate) {
+        this.isUpdate = isUpdate;
     }
 
     /**

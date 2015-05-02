@@ -19,6 +19,8 @@ public class Operations implements Serializable
     private String DateOp;
     private String NumCompte;
     private boolean Fiable;
+    private String NbrRefusees;
+    private boolean isUpdate;
 
     /**
      * @return the IdOp
@@ -102,6 +104,34 @@ public class Operations implements Serializable
      */
     public void setFiable(boolean Fiable) {
         this.Fiable = Fiable;
+    }
+
+    /**
+     * @return the NbrRefusees
+     */
+    public String getNbrRefusees() {
+        return NbrRefusees;
+    }
+
+    /**
+     * @param NbrRefusees the NbrRefusees to set
+     */
+    public void setNbrRefusees(String NbrRefusees) {
+        this.NbrRefusees = NbrRefusees;
+    }
+
+    /**
+     * @return the isUpdate
+     */
+    public boolean isIsUpdate() {
+        return isUpdate;
+    }
+
+    /**
+     * @param isUpdate the isUpdate to set
+     */
+    public void setIsUpdate(boolean isUpdate) {
+        this.isUpdate = isUpdate;
     }
     
 }

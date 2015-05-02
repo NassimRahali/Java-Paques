@@ -6,16 +6,29 @@
 package agent_bancaire;
 
 import GUI.Connexion;
+import GUI.SignatureGUI;
 import Protocol.Pull;
 import Protocol.Push;
 import java.awt.Color;
 import java.awt.Component;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import static java.lang.System.exit;
 import java.net.Socket;
+import java.security.InvalidKeyException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,7 +36,10 @@ import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SealedObject;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -35,6 +51,7 @@ import m18.kerberos.tgs.AuthenticatorTGS;
 import m18.kerberos.tgs.TGSReply;
 import m18.kerberos.tgs.TGSRequest;
 import m18.kerberos.tgs.TicketCS;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import protocoleCLIBOP.Operations;
 import protocoleCLIBOP.ReponseCLIBOP;
 import protocoleCLIBOP.RequeteCLIBOP;
@@ -79,6 +96,14 @@ public class Agent_Bancaire extends javax.swing.JFrame
     private DefaultTableModel dmAvg;
     private DefaultTableModel dmDeb;
     private DefaultTableModel dmValid;
+    
+    private static String codeProvider =  "BC";//"CryptixCrypto";
+    
+    static
+    {
+        Security.addProvider(new BouncyCastleProvider());
+        //Security.addProvider(new CryptixCrypto());
+    }
     
     public Agent_Bancaire()
     {
@@ -134,14 +159,14 @@ public class Agent_Bancaire extends javax.swing.JFrame
 
             portDS = Integer.parseInt(p.getProperty("portDS"));
             ipDS = (p.getProperty("ip"));
-//            portAsDS = Integer.parseInt(p.getProperty("portAS"));
-//            ipAsDS = p.getProperty("ipAS");
-//            portTgsDS= Integer.parseInt(p.getProperty("portTGS"));
-//            ipTgsDS = p.getProperty("ipTGS");
 
             fis.close();
         }
         catch(IOException ex){ Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex); }
+        
+        
+        this.ButConnexion.setBackground(Color.WHITE);
+        this.ButSoumettre.setBackground(Color.WHITE);
     }
     
     /**
@@ -178,21 +203,22 @@ public class Agent_Bancaire extends javax.swing.JFrame
         TextFDateFin = new javax.swing.JTextField();
         jLabel6 = new javax.swing.JLabel();
         TextFDateDeb = new javax.swing.JTextField();
-        jLabel7 = new javax.swing.JLabel();
-        TextFIdCompte = new javax.swing.JTextField();
+        jLabel8 = new javax.swing.JLabel();
+        TextFAnnee = new javax.swing.JTextField();
+        ButValidation = new javax.swing.JButton();
         PanRequetes = new javax.swing.JPanel();
-        PanReq1 = new javax.swing.JPanel();
+        PanReqOp = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         TabOp = new javax.swing.JTable();
-        PanReq2 = new javax.swing.JPanel();
+        PanReqAverage = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
-        TabValidate = new javax.swing.JTable();
-        PanReq3 = new javax.swing.JPanel();
+        TabAverage = new javax.swing.JTable();
+        PanReqValidate = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
-        TabOp2 = new javax.swing.JTable();
-        PanReq4 = new javax.swing.JPanel();
+        TabValidate = new javax.swing.JTable();
+        PanReqDebit = new javax.swing.JPanel();
         jScrollPane5 = new javax.swing.JScrollPane();
-        TabOp3 = new javax.swing.JTable();
+        TabDebit = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -327,7 +353,7 @@ public class Agent_Bancaire extends javax.swing.JFrame
                 .addComponent(p1Ctrl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 35, Short.MAX_VALUE))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
 
         TPPrinc.addTab("Bank Server", jPanel1);
@@ -346,17 +372,24 @@ public class Agent_Bancaire extends javax.swing.JFrame
             }
         });
 
-        ComboCmd.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "GETLIST", "AVERAGE", "VALIDATION", "GETDEB" }));
+        ComboCmd.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "GETLIST", "AVERAGE", "VALIDATE", "GETDEB" }));
 
         jLabel3.setText("Commande");
 
         jLabel4.setText("Prénom");
 
-        jLabel5.setText("Date entre");
+        jLabel5.setText("Date : du");
 
-        jLabel6.setText("et");
+        jLabel6.setText("au");
 
-        jLabel7.setText("Id du compte");
+        jLabel8.setText("Année");
+
+        ButValidation.setText("Valider");
+        ButValidation.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ButValidationActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout PanCtrlLayout = new javax.swing.GroupLayout(PanCtrl);
         PanCtrl.setLayout(PanCtrlLayout);
@@ -367,53 +400,56 @@ public class Agent_Bancaire extends javax.swing.JFrame
                 .addGroup(PanCtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel4)
-                    .addComponent(jLabel5))
-                .addGap(25, 25, 25)
+                    .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
                 .addGroup(PanCtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(TextFPrenom)
                     .addComponent(ComboCmd, 0, 127, Short.MAX_VALUE)
                     .addComponent(TextFDateDeb, javax.swing.GroupLayout.Alignment.TRAILING))
-                .addGap(18, 18, 18)
-                .addComponent(jLabel6)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(PanCtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(TextFDateFin, javax.swing.GroupLayout.DEFAULT_SIZE, 127, Short.MAX_VALUE))
+                .addGap(10, 10, 10)
+                .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(TextFIdCompte, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(PanCtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(TextFDateFin, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(PanCtrlLayout.createSequentialGroup()
+                        .addComponent(jLabel8)
+                        .addGap(18, 18, 18)
+                        .addComponent(TextFAnnee, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(PanCtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(ButConnexion, javax.swing.GroupLayout.DEFAULT_SIZE, 157, Short.MAX_VALUE)
-                    .addComponent(ButSoumettre, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(33, 33, 33))
+                    .addComponent(ButSoumettre, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(ButValidation, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(30, 30, 30))
         );
         PanCtrlLayout.setVerticalGroup(
             PanCtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(PanCtrlLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(PanCtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(PanCtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(ComboCmd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(TextFIdCompte, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(ButConnexion))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(PanCtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel4)
-                    .addComponent(TextFPrenom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(PanCtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ComboCmd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ButValidation)
+                    .addComponent(jLabel8)
+                    .addComponent(TextFAnnee, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(6, 6, 6)
                 .addGroup(PanCtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(PanCtrlLayout.createSequentialGroup()
-                        .addGap(1, 1, 1)
-                        .addComponent(ButSoumettre))
-                    .addGroup(PanCtrlLayout.createSequentialGroup()
+                        .addGap(3, 3, 3)
+                        .addGroup(PanCtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(TextFPrenom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel4))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(PanCtrlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(TextFDateFin, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel5)
                             .addComponent(jLabel6)
-                            .addComponent(TextFDateDeb, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(15, Short.MAX_VALUE))
+                            .addComponent(TextFDateDeb, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(PanCtrlLayout.createSequentialGroup()
+                        .addComponent(ButSoumettre)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ButConnexion)))
+                .addContainerGap(12, Short.MAX_VALUE))
         );
 
         TabOp.setModel(new javax.swing.table.DefaultTableModel(
@@ -426,20 +462,47 @@ public class Agent_Bancaire extends javax.swing.JFrame
         ));
         jScrollPane2.setViewportView(TabOp);
 
-        javax.swing.GroupLayout PanReq1Layout = new javax.swing.GroupLayout(PanReq1);
-        PanReq1.setLayout(PanReq1Layout);
-        PanReq1Layout.setHorizontalGroup(
-            PanReq1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(PanReq1Layout.createSequentialGroup()
+        javax.swing.GroupLayout PanReqOpLayout = new javax.swing.GroupLayout(PanReqOp);
+        PanReqOp.setLayout(PanReqOpLayout);
+        PanReqOpLayout.setHorizontalGroup(
+            PanReqOpLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(PanReqOpLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 735, Short.MAX_VALUE)
                 .addContainerGap())
         );
-        PanReq1Layout.setVerticalGroup(
-            PanReq1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(PanReq1Layout.createSequentialGroup()
+        PanReqOpLayout.setVerticalGroup(
+            PanReqOpLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(PanReqOpLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 399, Short.MAX_VALUE))
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 364, Short.MAX_VALUE))
+        );
+
+        TabAverage.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "DateOp", "Prenom", "Montant"
+            }
+        ));
+        jScrollPane3.setViewportView(TabAverage);
+
+        javax.swing.GroupLayout PanReqAverageLayout = new javax.swing.GroupLayout(PanReqAverage);
+        PanReqAverage.setLayout(PanReqAverageLayout);
+        PanReqAverageLayout.setHorizontalGroup(
+            PanReqAverageLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(PanReqAverageLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 725, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        PanReqAverageLayout.setVerticalGroup(
+            PanReqAverageLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(PanReqAverageLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 312, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(87, Short.MAX_VALUE))
         );
 
         TabValidate.setModel(new javax.swing.table.DefaultTableModel(
@@ -447,90 +510,57 @@ public class Agent_Bancaire extends javax.swing.JFrame
 
             },
             new String [] {
-                "IdOp", "DateOp", "ClientId", "Montant"
-            }
-        ));
-        jScrollPane3.setViewportView(TabValidate);
-
-        javax.swing.GroupLayout PanReq2Layout = new javax.swing.GroupLayout(PanReq2);
-        PanReq2.setLayout(PanReq2Layout);
-        PanReq2Layout.setHorizontalGroup(
-            PanReq2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(PanReq2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 725, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        PanReq2Layout.setVerticalGroup(
-            PanReq2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(PanReq2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 405, Short.MAX_VALUE))
-        );
-
-        TabOp2.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "NumCompte", "ClientId", "Validation"
+                "ClientId", "NumCompte", "Validation"
             }
         ) {
             Class[] types = new Class [] {
                 java.lang.Object.class, java.lang.Object.class, java.lang.Boolean.class
             };
-            boolean[] canEdit = new boolean [] {
-                true, true, false
-            };
 
             public Class getColumnClass(int columnIndex) {
                 return types [columnIndex];
             }
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
         });
-        jScrollPane4.setViewportView(TabOp2);
+        jScrollPane4.setViewportView(TabValidate);
 
-        javax.swing.GroupLayout PanReq3Layout = new javax.swing.GroupLayout(PanReq3);
-        PanReq3.setLayout(PanReq3Layout);
-        PanReq3Layout.setHorizontalGroup(
-            PanReq3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(PanReq3Layout.createSequentialGroup()
+        javax.swing.GroupLayout PanReqValidateLayout = new javax.swing.GroupLayout(PanReqValidate);
+        PanReqValidate.setLayout(PanReqValidateLayout);
+        PanReqValidateLayout.setHorizontalGroup(
+            PanReqValidateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(PanReqValidateLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 725, Short.MAX_VALUE)
                 .addContainerGap())
         );
-        PanReq3Layout.setVerticalGroup(
-            PanReq3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(PanReq3Layout.createSequentialGroup()
+        PanReqValidateLayout.setVerticalGroup(
+            PanReqValidateLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(PanReqValidateLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 405, Short.MAX_VALUE))
         );
 
-        TabOp3.setModel(new javax.swing.table.DefaultTableModel(
+        TabDebit.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "IdOp", "DateOp", "ClientId", "Montant"
+                "Année", "ClientId", "Refusé(s)"
             }
         ));
-        jScrollPane5.setViewportView(TabOp3);
+        jScrollPane5.setViewportView(TabDebit);
 
-        javax.swing.GroupLayout PanReq4Layout = new javax.swing.GroupLayout(PanReq4);
-        PanReq4.setLayout(PanReq4Layout);
-        PanReq4Layout.setHorizontalGroup(
-            PanReq4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(PanReq4Layout.createSequentialGroup()
+        javax.swing.GroupLayout PanReqDebitLayout = new javax.swing.GroupLayout(PanReqDebit);
+        PanReqDebit.setLayout(PanReqDebitLayout);
+        PanReqDebitLayout.setHorizontalGroup(
+            PanReqDebitLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(PanReqDebitLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 725, Short.MAX_VALUE)
                 .addContainerGap())
         );
-        PanReq4Layout.setVerticalGroup(
-            PanReq4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(PanReq4Layout.createSequentialGroup()
+        PanReqDebitLayout.setVerticalGroup(
+            PanReqDebitLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(PanReqDebitLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 405, Short.MAX_VALUE))
         );
@@ -541,44 +571,44 @@ public class Agent_Bancaire extends javax.swing.JFrame
             PanRequetesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(PanRequetesLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(PanReq1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(PanReqOp, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
             .addGroup(PanRequetesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(PanRequetesLayout.createSequentialGroup()
                     .addGap(20, 20, 20)
-                    .addComponent(PanReq2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(PanReqAverage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addContainerGap()))
             .addGroup(PanRequetesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(PanRequetesLayout.createSequentialGroup()
                     .addContainerGap()
-                    .addComponent(PanReq3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(PanReqValidate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGap(20, 20, 20)))
             .addGroup(PanRequetesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(PanRequetesLayout.createSequentialGroup()
                     .addGap(20, 20, 20)
-                    .addComponent(PanReq4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(PanReqDebit, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addContainerGap()))
         );
         PanRequetesLayout.setVerticalGroup(
             PanRequetesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, PanRequetesLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(PanReq1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(PanReqOp, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
             .addGroup(PanRequetesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(PanRequetesLayout.createSequentialGroup()
                     .addGap(21, 21, 21)
-                    .addComponent(PanReq2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(PanReqAverage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGap(1, 1, 1)))
             .addGroup(PanRequetesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(PanRequetesLayout.createSequentialGroup()
                     .addGap(31, 31, 31)
-                    .addComponent(PanReq3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(PanReqValidate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addContainerGap()))
             .addGroup(PanRequetesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(PanRequetesLayout.createSequentialGroup()
                     .addGap(21, 21, 21)
-                    .addComponent(PanReq4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(PanReqDebit, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGap(21, 21, 21)))
         );
 
@@ -613,7 +643,7 @@ public class Agent_Bancaire extends javax.swing.JFrame
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(TPPrinc, javax.swing.GroupLayout.DEFAULT_SIZE, 594, Short.MAX_VALUE)
+            .addComponent(TPPrinc, javax.swing.GroupLayout.DEFAULT_SIZE, 559, Short.MAX_VALUE)
         );
 
         pack();
@@ -919,12 +949,6 @@ public class Agent_Bancaire extends javax.swing.JFrame
             socketClientDS = new Socket(ipDS, portDS);
             oisDS = new ObjectInputStream(socketClientDS.getInputStream());
             oosDS = new ObjectOutputStream(socketClientDS.getOutputStream());                        
-//            
-//            for (Component c2 : this.PanCtrl.getComponents())
-//            {
-//                c2.setEnabled(true);
-//            }
-//            this.ButConnexion.setEnabled(false);
             
         } 
         catch (Exception ex){Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);}
@@ -939,21 +963,21 @@ public class Agent_Bancaire extends javax.swing.JFrame
             dmOp.removeRow(i);
         }
         
-        dmValid = (DefaultTableModel) this.TabOp.getModel();
+        dmValid = (DefaultTableModel) this.TabValidate.getModel();
         int rowCountV = dmValid.getRowCount();
         for (int i = rowCountV - 1; i >= 0; i--)
         {
             dmValid.removeRow(i);
         }
         
-        dmDeb = (DefaultTableModel) this.TabOp.getModel();
+        dmDeb = (DefaultTableModel) this.TabDebit.getModel();
         int rowCountD = dmDeb.getRowCount();
         for (int i = rowCountD - 1; i >= 0; i--)
         {
             dmDeb.removeRow(i);
         }
         
-        dmAvg = (DefaultTableModel) this.TabOp.getModel();
+        dmAvg = (DefaultTableModel) this.TabAverage.getModel();
         int rowCountA = dmAvg.getRowCount();
         for (int i = rowCountA - 1; i >= 0; i--)
         {
@@ -962,20 +986,24 @@ public class Agent_Bancaire extends javax.swing.JFrame
     }
     
     private void ButSoumettreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButSoumettreActionPerformed
-         try
+        try
         {
             this.initTab();
+            
             
             //Requête
             RequeteCLIBOP req = new RequeteCLIBOP();
             req.setAuthenticator(this.Authentificateur);
             req.setTicket(this.Ticket);
+            
             req.setCmd(this.ComboCmd.getSelectedItem().toString());
+            req.setIsUpdate(false);
             
             switch(req.getCmd())
             {
                 case "GETLIST":
                 {
+                    req.setCmd("GETLIST");
                     req.setPrenom(this.TextFPrenom.getText());
                     req.setDateDebut(this.TextFDateDeb.getText());
                     req.setDateFin(this.TextFDateFin.getText());  
@@ -984,20 +1012,23 @@ public class Agent_Bancaire extends javax.swing.JFrame
                     
                 case "AVERAGE":
                 {
-                    
+                    req.setCmd("AVERAGE");
+                    req.setPrenom(this.TextFPrenom.getText());
                 }
                 break;
                     
                 case "GETDEB":
                 {
-                    
+                    req.setCmd("GETDEB");
+                    req.setPrenom(this.TextFPrenom.getText());
+                    req.setAnnee(this.TextFAnnee.getText());
                 }
                 break;
                     
                 case "VALIDATE":
                 {
+                    req.setCmd("VALIDATE");
                     req.setPrenom(this.TextFPrenom.getText());
-                    req.setIdCompte(this.TextFIdCompte.getText());
                 }
                 break;
                     
@@ -1015,21 +1046,22 @@ public class Agent_Bancaire extends javax.swing.JFrame
             if(timestamp == auth.getCurrentTime())
                 System.out.println(">> Serveur authentifié");
             
-             switch(rep.getCmd())
+            this.ButValidation.setBackground(Color.WHITE);
+            
+            switch(rep.getCmd())
             {
                 case "GETLIST":
                 {
-                    this.PanReq1.setVisible(true);
-                    this.PanReq2.setVisible(false);
-                    this.PanReq3.setVisible(false);
-                    this.PanReq4.setVisible(false);
+                    this.PanReqOp.setVisible(true);
+                    this.PanReqAverage.setVisible(false);
+                    this.PanReqValidate.setVisible(false);
+                    this.PanReqDebit.setVisible(false);
+ 
                     
-                    Vector<String> v = new Vector();
-                    Operations o = new Operations();
-                    
-                    for(int i = 0;i<rep.getTuples().size();i++)
+                    for(int i = 0; i < rep.getTuples().size(); i++)
                     {
-                        o = rep.getTuples().get(i);
+                        Operations o = rep.getTuples().get(i);
+                        Vector<String> v = new Vector();
                         
                         v.add(o.getIdOp());
                         v.add(o.getDateOp());
@@ -1038,59 +1070,166 @@ public class Agent_Bancaire extends javax.swing.JFrame
                         
                         dmOp.addRow(v);
                     }
-                     
                 }
                 break;
                     
                 case "AVERAGE":
                 {
+                    this.PanReqOp.setVisible(false);
+                    this.PanReqAverage.setVisible(true);
+                    this.PanReqValidate.setVisible(false);
+                    this.PanReqDebit.setVisible(false);
+
                     
+                    for(int i = 0;i<rep.getTuples().size();i++)
+                    {
+                        Vector<String> v = new Vector();
+                        Operations o = rep.getTuples().get(i);
+                        
+                        v.add(o.getDateOp());
+                        v.add(o.getClientID());
+                        v.add(o.getMontant());
+                        
+                        dmAvg.addRow(v);
+                    }
                 }
                 break;
                     
                 case "GETDEB":
                 {
+                    this.PanReqOp.setVisible(false);
+                    this.PanReqAverage.setVisible(false);
+                    this.PanReqValidate.setVisible(false);
+                    this.PanReqDebit.setVisible(true);
                     
+                    
+                    for(int i = 0;i<rep.getTuples().size();i++)
+                    {
+                        Vector<String> v = new Vector();
+                        Operations o = rep.getTuples().get(i);
+                        
+                        v.add(o.getDateOp());
+                        v.add(o.getClientID());
+                        v.add(o.getNbrRefusees());
+                        
+                        dmDeb.addRow(v);
+                    }
                 }
                 break;
                     
                 case "VALIDATE":
                 {
-                    this.PanReq1.setVisible(false);
-                    this.PanReq2.setVisible(false);
-                    this.PanReq3.setVisible(true);
-                    this.PanReq4.setVisible(false);
-                    
-                    Vector<String> v = new Vector();
-                    Operations o = new Operations();
-                    
+                   
+                    this.PanReqOp.setVisible(false);
+                    this.PanReqAverage.setVisible(false);
+                    this.PanReqValidate.setVisible(true);
+                    this.PanReqDebit.setVisible(false);
+
+
                     for(int i = 0;i<rep.getTuples().size();i++)
                     {
-                        o = rep.getTuples().get(i);
-                        
-                        v.add(o.getNumCompte());
+                        Vector<String> v = new Vector();
+                        Operations o = rep.getTuples().get(i);
+
                         v.add(o.getClientID());
-                        v.add(String.valueOf(o.isFiable()));
-                        
+                        v.add(o.getNumCompte());
+
                         dmValid.addRow(v);
-                    }
+                        dmValid.setValueAt(o.isFiable(), i, 2);
+                    } 
                 }
-                break;
-                    
+                break;   
             }
                     
         }
-        catch (IOException | ClassNotFoundException ex)
-        {
-            this.Status1.setText("Echec recherche");
-            this.Status1.setBackground(Color.red);
-            Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        catch(Exception ex)
-        {
-            Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);            
-        }
+        catch (IOException | ClassNotFoundException ex){ Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex); }
+        catch(Exception ex){ Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex); }
     }//GEN-LAST:event_ButSoumettreActionPerformed
+
+    private void ButValidationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButValidationActionPerformed
+        
+        try 
+        {
+            //Requête
+            RequeteCLIBOP req = new RequeteCLIBOP();
+            req.setAuthenticator(this.Authentificateur);
+            req.setTicket(this.Ticket);
+            
+            SignatureGUI s = new SignatureGUI(this, true);
+            s.setVisible(true);
+            String msg = null;
+            byte[] signature = null;
+            
+            try 
+            {
+                KeyStore ks = null;
+                ks = KeyStore.getInstance("JKS");
+                ks.load(new FileInputStream("comptableKaou_keystore.jks"),"cisco12".toCharArray());
+
+                System.out.println(">> Récupération de la clé privée\n");
+                PrivateKey clePrivee;
+                clePrivee = (PrivateKey) ks.getKey("comptableKaou", "cisco12".toCharArray());
+                System.out.println("\t >> Cle privee recuperee = " + clePrivee.toString());
+
+                //Signature d'un message
+                System.out.println("\n >> Signature du message");
+                System.out.println("\n\t >> 1. Instanciation de la signature");
+                java.security.Signature sign = java.security.Signature. getInstance("SHA1withECDSA",codeProvider);
+                System.out.println("\t >> 2. Initialisation de la signature");
+                sign.initSign(clePrivee);
+                System.out.println("\t >> 3. Ajout du message à la signature");
+                msg = s.getPseudo()+s.getPasswd();
+                sign.update(msg.getBytes());
+                System.out.println("\t >> 4. Génération de la signature");
+                signature = sign.sign();
+                System.out.println("\t\t >> Signature = " + new String(signature));
+                System.out.println("\t\t >> Longueur de la signature = " + signature.length+"\n");
+
+
+            } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | UnrecoverableKeyException | InvalidKeyException | SignatureException ex) {
+                Logger.getLogger(SignatureGUI.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(SignatureGUI.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                Logger.getLogger(SignatureGUI.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (NoSuchProviderException ex) {
+                Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+            req.setCmd("UPDATE");
+            req.setComptable(msg);
+            req.setSignature(signature);
+            
+            for(int i =0; i< TabValidate.getRowCount(); i++)
+            {
+                req.getListUpdates().put(TabValidate.getValueAt(i, 1).toString(),TabValidate.getValueAt(i, 2).toString());
+            }
+            
+            oosDS.writeObject(req);
+            
+            //Réponse
+            ReponseCLIBOP rep = (ReponseCLIBOP) oisDS.readObject();
+            SealedObject so = rep.getTimestamp();
+            Cipher c = Cipher.getInstance("DES/ECB/PKCS5Padding");
+            c.init(Cipher.DECRYPT_MODE, KCS);
+            Date timestamp = (Date)so.getObject(c);
+            if(timestamp == auth.getCurrentTime())
+                System.out.println(">> Serveur authentifié");
+            
+            
+            if(rep.getCmd().equals("UPDATE"))
+            {
+                if(rep.isIsUpdate()==true)
+                   this.ButValidation.setBackground(Color.green);
+                else 
+                   this.ButValidation.setBackground(Color.red); 
+            }
+                
+        } 
+        catch (IOException | ClassNotFoundException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException ex) { Logger.getLogger(Agent_Bancaire.class.getName()).log(Level.SEVERE, null, ex);}
+        
+        this.initTab();
+    }//GEN-LAST:event_ButValidationActionPerformed
     
     /**
      * @param args the command line arguments
@@ -1140,22 +1279,23 @@ public class Agent_Bancaire extends javax.swing.JFrame
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton ButConnexion;
     private javax.swing.JButton ButSoumettre;
+    private javax.swing.JButton ButValidation;
     private javax.swing.JComboBox ComboCmd;
     private javax.swing.JPanel PanCtrl;
-    private javax.swing.JPanel PanReq1;
-    private javax.swing.JPanel PanReq2;
-    private javax.swing.JPanel PanReq3;
-    private javax.swing.JPanel PanReq4;
+    private javax.swing.JPanel PanReqAverage;
+    private javax.swing.JPanel PanReqDebit;
+    private javax.swing.JPanel PanReqOp;
+    private javax.swing.JPanel PanReqValidate;
     private javax.swing.JPanel PanRequetes;
     private javax.swing.JLabel Status1;
     private javax.swing.JTabbedPane TPPrinc;
+    private javax.swing.JTable TabAverage;
+    private javax.swing.JTable TabDebit;
     private javax.swing.JTable TabOp;
-    private javax.swing.JTable TabOp2;
-    private javax.swing.JTable TabOp3;
     private javax.swing.JTable TabValidate;
+    private javax.swing.JTextField TextFAnnee;
     private javax.swing.JTextField TextFDateDeb;
     private javax.swing.JTextField TextFDateFin;
-    private javax.swing.JTextField TextFIdCompte;
     private javax.swing.JTextField TextFPrenom;
     private javax.swing.JButton b1Connexion;
     private javax.swing.JButton b1Recherche;
@@ -1167,7 +1307,7 @@ public class Agent_Bancaire extends javax.swing.JFrame
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
