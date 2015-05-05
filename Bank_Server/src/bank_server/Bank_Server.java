@@ -70,7 +70,7 @@ public class Bank_Server
         DBCollection collection = null;
         try
         {
-            MongoClient mongoClient = new MongoClient("localhost");
+            MongoClient mongoClient = new MongoClient("10.43.14.40");
             DB db = mongoClient.getDB("java");
             collection = db.getCollection("transactions");
         }

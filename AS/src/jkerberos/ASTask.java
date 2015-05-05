@@ -7,6 +7,7 @@ package jkerberos;
  */
 
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -87,9 +88,20 @@ public class ASTask implements Runnable {
                 }
 
             }
-        } catch (IOException | ClassNotFoundException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException ex) {
+        }
+        catch (EOFException ex)
+        {
+            System.out.println("Connexion fermée par le client.");
+            try {
+                cSock.close();
+            } catch (IOException ex1) {
+                Logger.getLogger(ASTask.class.getName()).log(Level.SEVERE, null, ex1);
+            }
+        }
+        catch (IOException | ClassNotFoundException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException ex) {
             Logger.getLogger(ASTask.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
 
     }
 
